@@ -1,13 +1,13 @@
 import board
 import busio
 import digitalio
-from adafruit_ra8875 import RA8875
+import ra8875
 
 # Setup SPI bus and RA8875 display object
 spi = busio.SPI(clock=board.SCLK, MOSI=board.MOSI, MISO=board.MISO)
 cs = digitalio.DigitalInOut(board.CE0)
 rst = digitalio.DigitalInOut(board.D22)  # Example GPIO for reset
-display = RA8875(spi, cs, rst)
+display = adafruit_ra8875.RA8875(spi, cs, rst)
 
 # Initialize display
 display.initialize()
