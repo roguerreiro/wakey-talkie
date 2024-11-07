@@ -1,5 +1,7 @@
 import tkinter as tk
-from views import HomePage, IntercomPage, AlarmPage
+from views.HomePage import HomePage
+from views.AlarmPage import AlarmPage
+from views.IntercomPage import IntercomPage
 
 class MainApp(tk.Tk):
     def __init__(self):
