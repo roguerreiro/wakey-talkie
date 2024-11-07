@@ -16,4 +16,5 @@ class AlarmPage(tk.Frame):
                             command=lambda: controller.show_frame("HomePage"))
         back_button.pack(expand=True, fill="both")
 
+        self.fields = []
         
