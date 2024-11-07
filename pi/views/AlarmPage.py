@@ -15,3 +15,5 @@ class AlarmPage(tk.Frame):
         back_button = ttk.Button(button_frame, text="Back",
                             command=lambda: controller.show_frame("HomePage"))
         back_button.pack(expand=True, fill="both")
+
+        
