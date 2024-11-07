@@ -1,3 +1,14 @@
+/*
+ * bugs:
+ * - display.display cannot run in ISR - too slow! causes semaphore bug
+ * - alarm triggering causes timer register error becuase no free timer > 
+ *      need to address this and shut down all timers
+ *      
+ * - alarm seems to be retriggering before alarm ends!
+ */
+bool alarmEnable = true; // temp workaround
+// to make sure trigger doesn't get called repeatedly within the second
+
 #include <Adafruit_GrayOLED.h>
 #include <gfxfont.h>
 #include <Adafruit_GFX.h>
@@ -9,7 +20,7 @@
 #include <FS.h>
 #include <SPIFFS.h>
 
-// Time Web API Setup
+// Time API Setup
 const char* ssid       = "DukeVisitor";
 const char* password   = "";
 const char* ntpServer = "pool.ntp.org";
@@ -20,10 +31,20 @@ volatile int minute;
 volatile int hour;
 volatile int second;
 
+// ISR Flags
+volatile bool sampleFlag = false;
 volatile bool stopFlag = false;
-const int STOP_BTN = 32;
-const int dacPin = 25;
 
+// maybe change to defines
+const int STOP_BTN = 32;
+
+#define DAC_OUT 25
+
+hw_timer_t *sampleTimer = NULL;
+File audioFile; 
+
+// for now, assume only one alarm
+int repeatCount = 0;
 
 // LED Matrix Display
 #define P_LAT 22
@@ -35,9 +56,11 @@ const int dacPin = 25;
 #define P_OE 2
 PxMATRIX display(32,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
 
+#define RANDOM_PIN 34
+
 // Time Setup
-hw_timer_t * timer = NULL;
-hw_timer_t *timer2 = NULL;
+hw_timer_t *displayTimer = NULL;
+hw_timer_t *clockTimer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 volatile bool second_flag;
@@ -47,33 +70,39 @@ uint16_t randomColor()
   return random(65535);
 }
 
-void IRAM_ATTR isr_stop_button()
+void IRAM_ATTR isr_stop_alarm()
 {
   stopFlag = true;
+}
+
+void IRAM_ATTR isr_play_sample()
+{
+  sampleFlag = true;
 }
 
 void IRAM_ATTR isr_second_passed()
 {
   portENTER_CRITICAL_ISR(&timerMux);
   second_flag = 1;
-//  second++;
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
 void IRAM_ATTR isr_display_updater()
 {
   portENTER_CRITICAL_ISR(&timerMux);
-  display.display(70);
+//  display.display(70); // commented out because I think it's the cause of the crash
   portEXIT_CRITICAL_ISR(&timerMux);
 }
 
 void formatTime();
-void triggerAlarm();
-void playWAV();
+void triggerAlarm(String alarmFile, int repeats);
+void playWAV(String fileName);
+void stopAlarm();
+void repeatAlarm();
 
 void setup() 
 {
-  Serial.begin(9600);
+  Serial.begin(115200);
 
   // connect to WiFi
   Serial.printf("Connecting to %s ", ssid);
@@ -84,24 +113,23 @@ void setup()
   }
   Serial.println(" CONNECTED");
 
-  //init and get the time
+  // Initialize Time API 
   configTime(gmtOffset_sec, daylightOffset_sec, ntpServer);
-//  printLocalTime();
 
   // initialize random seed to disconnected analog pin input
-  pinMode(32, INPUT);
-  randomSeed(analogRead(32));
+  pinMode(RANDOM_PIN, INPUT);
+  randomSeed(analogRead(RANDOM_PIN));
   
   display.begin(16); 
   display.flushDisplay();
 
-  timer2 = timerBegin(1000000);
-  timerAttachInterrupt(timer2, &isr_second_passed);
-  timerAlarm(timer2, 1000000, true, 0);
+  clockTimer = timerBegin(1000000);
+  timerAttachInterrupt(clockTimer, &isr_second_passed);
+  timerAlarm(clockTimer, 1000000, true, 0);
   
-  timer = timerBegin(1000000); // TODO try changing to 80
-  timerAttachInterrupt(timer, &isr_display_updater);
-  timerAlarm(timer, 4000, true, 0);
+  displayTimer = timerBegin(1000000); // TODO try changing to 80
+  timerAttachInterrupt(displayTimer, &isr_display_updater);
+  timerAlarm(displayTimer, 4000, true, 0);
 
   display.setTextColor(randomColor());
   display.setTextSize(1);
@@ -120,9 +148,44 @@ void setup()
   formatTime();
   display.clearDisplay(); 
   display.print(the_time);
+
+  // Enable button interrupt
+  pinMode(STOP_BTN, INPUT);
+  attachInterrupt(STOP_BTN, isr_stop_alarm, RISING);
+  
+  // Initialize SPIFFS
+  if (!SPIFFS.begin(true)) {
+    Serial.println("SPIFFS mount failed");
+    delay(3000);
+    return;
+  }
+
+//  triggerAlarm("/ceilings16.wav", 3); // trying this to see if it fixes
+  // timer register bug > IT DID
 }
 
 void loop() {
+  if(sampleFlag) // time to play a sample
+  {
+    sampleFlag = false; 
+    if(stopFlag) 
+    {
+      stopAlarm();
+      stopFlag = false;
+    }
+    else if (audioFile.available())
+    {
+      int sample = audioFile.read(); 
+      dacWrite(DAC_OUT, sample);  
+    } 
+    else 
+    {
+      repeatAlarm();    
+    }
+  }
+
+  // display flag
+  
   if(second_flag)
   {
     second++;
@@ -130,11 +193,14 @@ void loop() {
     formatTime();
     display.print(the_time);
     second_flag = 0;
+    alarmEnable = true; // temp workaround
   }
-  if(second == 0)
+  if(second == 0 && alarmEnable)
   {
-    triggerAlarm();
+    alarmEnable = false; // temp workaround
+    triggerAlarm("/ceilings16.wav", 3);
   }
+//  Serial.println("bottom of loop --------------");
 }
 
 void formatTime()
@@ -175,42 +241,54 @@ void formatTime()
   }
 }
 
-void triggerAlarm()
+void triggerAlarm(String alarmFile, int repeats) // wrapper/enum for alarm sounds
 {
   Serial.println("Alarm was triggered!");
-  while(!stopFlag)
-  {
-    playWAV("/ceilings16.wav");
-  }
-  stopFlag = false;
-  Serial.println("Alarm is over.");
+  Serial.print("repeatCount = ");
+  Serial.println(repeatCount);
+  repeatCount = repeats - 1;
+  playWAV(alarmFile);
 }
 
 void playWAV(String fileName)
 {
-  File audioFile = SPIFFS.open(fileName, "r"); 
+  // Open the WAV file
+  audioFile = SPIFFS.open(fileName, "r"); 
   if (!audioFile) {
     Serial.println("Failed to open file");
     delay(3000);
     return;
   }
-  audioFile.seek(44); // skip WAV header
-//  Serial.println(audioFile.available());
-  delay(2000); // not sure if we need this
 
-  // Enable button interrupt
-  pinMode(STOP_BTN, INPUT);
-  attachInterrupt(STOP_BTN, isr_stop_button, RISING); // might not want to do this each time
-  
-  // Read and play audio data
-  while (audioFile.available() && stopFlag==0) 
+  // maybe move this all into if
+  sampleTimer = timerBegin(1000000); // TODO try changing to 80
+  if(audioFile.available())
   {
-    int sample = audioFile.read();
-    if (sample >= 0) {
-      dacWrite(dacPin, sample);
-    }
-    delayMicroseconds(40); // will need to be fixed for sure
+    timerAttachInterrupt(sampleTimer, &isr_play_sample);
+    Serial.println("interrupt attached");
   }
-  audioFile.close();
-  detachInterrupt(STOP_BTN);
+  timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+  audioFile.seek(44); // skip WAV header
+}
+
+void stopAlarm()
+{
+  timerEnd(sampleTimer);  
+  audioFile.close();      
+  repeatCount = 0;       
+  Serial.println("Alarm stopped.");
+}
+
+void repeatAlarm()
+{
+  if(repeatCount)
+  {
+    Serial.println("Repeating the alarm.");
+    repeatCount--;
+    audioFile.seek(44);
+  }
+  else
+  {
+    stopAlarm();
+  }
 }
