@@ -34,6 +34,7 @@ volatile int second;
 // ISR Flags
 volatile bool sampleFlag = false;
 volatile bool stopFlag = false;
+volatile bool updateDisplayFlag = false;
 
 // maybe change to defines
 const int STOP_BTN = 32;
@@ -43,7 +44,7 @@ const int STOP_BTN = 32;
 hw_timer_t *sampleTimer = NULL;
 File audioFile; 
 
-// for now, assume only one alarm
+// for now, assume only one alarm choice
 int repeatCount = 0;
 
 // LED Matrix Display
@@ -89,6 +90,7 @@ void IRAM_ATTR isr_second_passed()
 
 void IRAM_ATTR isr_display_updater()
 {
+  updateDisplayFlag = true;
   portENTER_CRITICAL_ISR(&timerMux);
 //  display.display(70); // commented out because I think it's the cause of the crash
   portEXIT_CRITICAL_ISR(&timerMux);
@@ -185,6 +187,11 @@ void loop() {
   }
 
   // display flag
+  if(updateDisplayFlag)
+  {
+    display.display(70);
+    updateDisplayFlag = false;
+  }
   
   if(second_flag)
   {
