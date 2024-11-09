@@ -2,13 +2,14 @@ import tkinter as tk
 from views.HomePage import HomePage
 from views.AlarmPage import AlarmPage
 from views.IntercomPage import IntercomPage
+import os
 
 class MainApp(tk.Tk):
     def __init__(self):
         tk.Tk.__init__(self)
 
-        # self.attributes("-fullscreen", True)
-        # self.bind("<Escape>", lambda event: self.attributes("-fullscreen", False))
+        self.attributes("-fullscreen", True)
+        self.bind("<Escape>", lambda event: self.attributes("-fullscreen", False))
         self.geometry("800x480")
 
         container = tk.Frame(self)
@@ -31,5 +32,8 @@ class MainApp(tk.Tk):
         frame.tkraise()
 
 if __name__ == "__main__":
+    absolute_path = os.path.abspath(__file__)
+    print(absolute_path)
+    
     app = MainApp()
     app.mainloop()
