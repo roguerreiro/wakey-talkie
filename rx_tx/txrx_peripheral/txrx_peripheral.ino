@@ -64,7 +64,7 @@ void send_message(){
    radio.openReadingPipe(1,peripheralAddress);
    radio.startListening(); // Go back to listening mode
    //Serial.println(radio.isChipConnected());
-   delay(5);
+   delay(10);
 }
 
 

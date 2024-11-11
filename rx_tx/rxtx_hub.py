@@ -85,4 +85,4 @@ if __name__ == "__main__":
         
         else:
             receive_message()    # Listen for a response
-    time.sleep(0.01)
+    time.sleep(0.001)
