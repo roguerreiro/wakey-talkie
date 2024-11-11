@@ -11,7 +11,9 @@ send_led = 22
 rec_led = 18
 
 # Define addresses
-peripheralAddress = 0xF0F0F0F0E1  # Address to send to the peripheral
+peripheral0Address = 0xF0F0F0F0E1  # Address to send to peripheral0
+peripheral1Address = 0xF0F0F0F0C3 #Address to send to peripheral1
+peripheral2Address = 0xF0F0F0F0B1 #Adddress to send to peripheral2
 hubAddress = 0xF0F0F0F0D2   # Address to receive responses from the peripheral
 
 def setup():
@@ -24,15 +26,16 @@ def setup():
     # Initialize the radio
     radio.begin()
     radio.setPALevel(RF24_PA_LOW)  # Set power level to low for testing
-    radio.setChannel(75)           # Ensure the same channel on both devices
-    radio.openWritingPipe(peripheralAddress)
-    radio.openReadingPipe(1, hubAddress)
-    radio.startListening()         # Start listening immediately
+    radio.setChannel(75)           # Ensure the same channel on both devices)
+    radio.openReadingPipe(0, peripheral0Address)
+    radio.openReadingPipe(1, peripheral1Address)
+    radio.openReadingPipe(2, peripheral2Address)
+    radio.startListening()# Start listening immediately
 
-
-def send_message():
+def send_message(address):
     # Define the message to send
     radio.stopListening()  # Stop listening to transmit data
+    radio.openWritingPipe(address)
     message = "Hello Peripheral"
     success = radio.write(message.encode('utf-8'))  # Send message
     if success:
@@ -44,27 +47,41 @@ def send_message():
         print("Message sending failed")
         GPIO.output(send_led, GPIO.LOW)
         time.sleep(0.005)
-    radio.openReadingPipe(1, hubAddress)
+        
+    radio.openReadingPipe(0, peripheral0Address)
+    radio.openReadingPipe(1, peripheral1Address)
+    radio.openReadingPipe(2, peripheral2Address)
     radio.startListening()  # Return to listening mode for responses
 
-
 def receive_message():
-    # Check for incoming messages from the peripheral
+    pipe = radio.available_pipe()
+        
     if radio.available():
         received_message = []
         received_message = radio.read(radio.getDynamicPayloadSize())
-        print("Received:", "".join(chr(i) for i in received_message))
         GPIO.output(rec_led, GPIO.HIGH)
+    
+        if pipe[1] == 0:
+            print("Received from peripheral0:", "".join(chr(i) for i in received_message))
+            send_message(peripheral0Address)
+            
+        elif pipe[1] == 1:
+            print("Received from peripheral1:", "".join(chr(i) for i in received_message))
+            send_message(peripheral1Address)
+        
+        elif pipe[1] == 2:
+            print("Received from peripheral2:", "".join(chr(i) for i in received_message))       
+            send_message(peripheral2Address)
+       
         time.sleep(0.1)
         GPIO.output(rec_led, GPIO.LOW)
         radio.startListening
-
 
 if __name__ == "__main__":
     setup()
     while True:
         if GPIO.input(button_pin) == GPIO.HIGH:
-            send_message()       # Send a message to the peripheral
+            send_message(peripheral0Address)       # Send a message to the peripheral
         
         else:
             receive_message()    # Listen for a response
