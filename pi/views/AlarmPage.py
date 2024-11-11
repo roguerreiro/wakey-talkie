@@ -26,17 +26,15 @@ class AlarmPage(tk.Frame):
         colon_label = tk.Label(main_frame, text=":", font=("Helvetica", 20))
         colon_label.grid(row=1, column=1)
 
-        # Minute spinbox (0-59)
         self.minute_var = tk.StringVar(value="00")
         minute_spinbox = tk.Spinbox(main_frame, from_=0, to=59, wrap=True, textvariable=self.minute_var,
                                     font=("Helvetica", 20), width=2, justify="center", state="readonly",
-                                    format="%02.0f")  # Format to always show 2 digits
+                                    format="%02.0f")
         minute_spinbox.grid(row=1, column=2, padx=5)
 
-        # AM/PM dropdown
         self.am_pm_var = tk.StringVar(value="AM")
         am_pm_menu = ttk.OptionMenu(main_frame, self.am_pm_var, "AM", "AM", "PM")
-        am_pm_menu.config(width=2)  # Set width to align with other fields
+        am_pm_menu.config(width=2)
         am_pm_menu.grid(row=1, column=3, padx=5)
 
         # Button to submit the time
