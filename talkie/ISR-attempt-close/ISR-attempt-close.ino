@@ -1,17 +1,5 @@
-/*
- * bugs:
- * 
- * - display.display cannot run in ISR - too slow! causes semaphore bug
- * - alarm triggering causes timer register error becuase no free timer > 
- *      need to address this and shut down all timers
- *      
- * - alarm seems to be retriggering before alarm ends!
- */
 #define TIMING_PIN 27
  
-bool alarmEnable = true; // temp workaround
-// to make sure trigger doesn't get called repeatedly within the second
-
 #include <Adafruit_GrayOLED.h>
 #include <gfxfont.h>
 #include <Adafruit_GFX.h>
@@ -35,20 +23,13 @@ volatile int hour;
 volatile int second;
 
 // ISR Flags
+volatile bool displayFlag = false;
+volatile bool secondFlag = false;
 volatile bool sampleFlag = false;
-volatile bool stopFlag = false;
-volatile bool updateDisplayFlag = false;
 
-// maybe change to defines
-const int STOP_BTN = 32;
+int sample;
 
-#define DAC_OUT 25
-
-hw_timer_t *sampleTimer = NULL;
 File audioFile; 
-
-// for now, assume only one alarm choice
-int repeatCount = 0;
 
 // LED Matrix Display
 #define P_LAT 22
@@ -57,6 +38,8 @@ int repeatCount = 0;
 #define P_C 18
 #define P_D 5
 #define P_OE 15
+#define DAC_OUT 25
+
 PxMATRIX display(32,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
 
 #define RANDOM_PIN 34
@@ -64,54 +47,41 @@ PxMATRIX display(32,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
 // Time Setup
 hw_timer_t *displayTimer = NULL;
 hw_timer_t *clockTimer = NULL;
+hw_timer_t *sampleTimer = NULL;
+
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
-volatile bool second_flag;
 
 uint16_t randomColor()
 {
   return random(65535);
 }
 
-//void IRAM_ATTR isr_stop_alarm()
-//{
-//  stopFlag = true;
-//}
-//
-void IRAM_ATTR isr_play_sample()
-{
-  sampleFlag = true;
-  digitalWrite(TIMING_PIN, 1);
-  int sample = audioFile.read(); 
-  dacWrite(DAC_OUT, sample);
-  digitalWrite(TIMING_PIN, 0);
-}
-
-//void IRAM_ATTR isr_second_passed()
-//{
-//  portENTER_CRITICAL_ISR(&timerMux);
-//  second_flag = 1;
-//  portEXIT_CRITICAL_ISR(&timerMux);
-//}
-
 void IRAM_ATTR isr_display_updater()
 {
-  updateDisplayFlag = true;
-//  portENTER_CRITICAL_ISR(&timerMux);
-//  display.display(70); 
-//  portEXIT_CRITICAL_ISR(&timerMux);
+  displayFlag = 1;
+}
+
+void IRAM_ATTR isr_second_passed()
+{
+  secondFlag = 1;
+}
+
+void IRAM_ATTR isr_play_sample()
+{
+//  int sample = 35;//audioFile.read(); 
+  dacWrite(DAC_OUT, sample);
+  sampleFlag = 1;
 }
 
 void formatTime();
-void triggerAlarm(String alarmFile, int repeats);
 void playWAV(String fileName);
-void stopAlarm();
-void repeatAlarm();
 
 void setup() 
 {
   Serial.begin(115200);
 
+  sample = 0;
   pinMode(TIMING_PIN, OUTPUT);
 
   // connect to WiFi
@@ -133,13 +103,13 @@ void setup()
   display.begin(16); 
   display.flushDisplay();
 
-//  clockTimer = timerBegin(1000000);
-//  timerAttachInterrupt(clockTimer, &isr_second_passed);
-//  timerAlarm(clockTimer, 1000000, true, 0);
-  
-  displayTimer = timerBegin(1000000); // TODO try changing to 80
+  displayTimer = timerBegin(1000000); 
   timerAttachInterrupt(displayTimer, &isr_display_updater);
-  timerAlarm(displayTimer, 4000, true, 0);
+  timerAlarm(displayTimer, 5000, true, 0); 
+
+  clockTimer = timerBegin(1000000);
+  timerAttachInterrupt(clockTimer, &isr_second_passed);
+  timerAlarm(clockTimer, 1000000, true, 0);
 
   display.setTextColor(randomColor());
   display.setTextSize(1);
@@ -163,10 +133,6 @@ void setup()
   display.clearDisplay(); 
   display.print(the_time);
 
-  // Enable button interrupt
-//  pinMode(STOP_BTN, INPUT);
-//  attachInterrupt(STOP_BTN, isr_stop_alarm, RISING);
-  
   // Initialize SPIFFS
   if (!SPIFFS.begin(true)) {
     Serial.println("SPIFFS mount failed");
@@ -174,56 +140,35 @@ void setup()
     return;
   }
 
-//  triggerAlarm("/hitsdifferent8.wav", 3); // trying this to see if it fixes
-  // timer register bug > IT DID
+  playWAV("/hitsdifferent8.wav");
+
 }
 
-void loop() {
-//  if(sampleFlag) // time to play a sample
-//  {
-//    sampleFlag = false; 
-//    if(stopFlag) 
-//    {
-//      stopAlarm();
-//      stopFlag = false;
-//    }
-//    else if (audioFile.available())
-//    {
-////      digitalWrite(TIMING_PIN, 1);
-//      int sample = audioFile.read(); 
-//      dacWrite(DAC_OUT, sample); 
-////      digitalWrite(TIMING_PIN, 0); 
-//    } 
-//    else 
-//    {
-//      repeatAlarm();    
-//    }
-//  }
-
-  // display flag
-  if(updateDisplayFlag)
+void loop() 
+{
+  if(sampleFlag)
   {
-    digitalWrite(TIMING_PIN, 1);
-    display.display(70);
-    updateDisplayFlag = false;
-    digitalWrite(TIMING_PIN, 0);
+//    digitalWrite(TIMING_PIN, 1);
+    sample = audioFile.read(); 
+//    dacWrite(DAC_OUT, sample);
+    sampleFlag = false;
+//    digitalWrite(TIMING_PIN, 0);
   }
-  
-  if(second_flag)
+  if(displayFlag)
   {
+    display.display(10);
+    displayFlag = false;
+  }
+  if(secondFlag)
+  {
+//    digitalWrite(TIMING_PIN, 1);
     second++;
     display.clearDisplay();
     formatTime();
     display.print(the_time);
-    second_flag = 0;
-    alarmEnable = true; // temp workaround
+    secondFlag = false;
+//    digitalWrite(TIMING_PIN, 0);
   }
-  if(second == 0 && alarmEnable)
-  {
-    alarmEnable = false; // temp workaround
-    triggerAlarm("/hitsdifferent8.wav", 4);
-  }
-//  Serial.println("bottom of loop --------------");
 }
 
 void formatTime()
@@ -264,15 +209,6 @@ void formatTime()
   }
 }
 
-void triggerAlarm(String alarmFile, int repeats) // wrapper/enum for alarm sounds
-{
-  Serial.println("Alarm was triggered!");
-  Serial.print("repeatCount = ");
-  Serial.println(repeatCount);
-  repeatCount = repeats - 1;
-  playWAV(alarmFile);
-}
-
 void playWAV(String fileName)
 {
   // Open the WAV file
@@ -292,26 +228,4 @@ void playWAV(String fileName)
   }
   timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
   audioFile.seek(44); // skip WAV header
-}
-
-void stopAlarm()
-{
-  timerEnd(sampleTimer);  
-  audioFile.close();      
-  repeatCount = 0;       
-  Serial.println("Alarm stopped.");
-}
-
-void repeatAlarm()
-{
-  if(repeatCount)
-  {
-    Serial.println("Repeating the alarm.");
-    repeatCount--;
-    audioFile.seek(44);
-  }
-  else
-  {
-    stopAlarm();
-  }
 }
