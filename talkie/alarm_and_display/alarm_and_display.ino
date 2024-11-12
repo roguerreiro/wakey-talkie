@@ -6,6 +6,8 @@
  *      
  * - alarm seems to be retriggering before alarm ends!
  */
+#define TIMING_PIN 27
+ 
 bool alarmEnable = true; // temp workaround
 // to make sure trigger doesn't get called repeatedly within the second
 
@@ -79,6 +81,10 @@ void IRAM_ATTR isr_stop_alarm()
 void IRAM_ATTR isr_play_sample()
 {
   sampleFlag = true;
+  digitalWrite(TIMING_PIN, 1);
+  int sample = audioFile.read(); 
+  dacWrite(DAC_OUT, sample);
+  digitalWrite(TIMING_PIN, 0);
 }
 
 void IRAM_ATTR isr_second_passed()
@@ -105,6 +111,8 @@ void repeatAlarm();
 void setup() 
 {
   Serial.begin(115200);
+
+  pinMode(TIMING_PIN, OUTPUT);
 
   // connect to WiFi
   Serial.printf("Connecting to %s ", ssid);
@@ -162,35 +170,39 @@ void setup()
     return;
   }
 
-//  triggerAlarm("/ceilings16.wav", 3); // trying this to see if it fixes
+//  triggerAlarm("/hitsdifferent8.wav", 3); // trying this to see if it fixes
   // timer register bug > IT DID
 }
 
 void loop() {
-  if(sampleFlag) // time to play a sample
-  {
-    sampleFlag = false; 
-    if(stopFlag) 
-    {
-      stopAlarm();
-      stopFlag = false;
-    }
-    else if (audioFile.available())
-    {
-      int sample = audioFile.read(); 
-      dacWrite(DAC_OUT, sample);  
-    } 
-    else 
-    {
-      repeatAlarm();    
-    }
-  }
+//  if(sampleFlag) // time to play a sample
+//  {
+//    sampleFlag = false; 
+//    if(stopFlag) 
+//    {
+//      stopAlarm();
+//      stopFlag = false;
+//    }
+//    else if (audioFile.available())
+//    {
+////      digitalWrite(TIMING_PIN, 1);
+//      int sample = audioFile.read(); 
+//      dacWrite(DAC_OUT, sample); 
+////      digitalWrite(TIMING_PIN, 0); 
+//    } 
+//    else 
+//    {
+//      repeatAlarm();    
+//    }
+//  }
 
   // display flag
   if(updateDisplayFlag)
   {
+//    digitalWrite(TIMING_PIN, 1);
     display.display(70);
     updateDisplayFlag = false;
+//    digitalWrite(TIMING_PIN, 0);
   }
   
   if(second_flag)
@@ -205,7 +217,7 @@ void loop() {
   if(second == 0 && alarmEnable)
   {
     alarmEnable = false; // temp workaround
-    triggerAlarm("/ceilings16.wav", 3);
+    triggerAlarm("/hitsdifferent8.wav", 4);
   }
 //  Serial.println("bottom of loop --------------");
 }
