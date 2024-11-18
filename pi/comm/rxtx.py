@@ -24,7 +24,7 @@ def send_message(ids, message, acks=True):
     radio.stopListening()  # Stop listening to transmit data
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
     for id in ids:
-        message = id + "|" + message
+        message = str(id) + "|" + message
     success = radio.write(message.encode('utf-8'))  # Send message
     if success:
         print("Message sent successfully")
