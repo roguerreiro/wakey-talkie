@@ -1,5 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
+from comm.rxtx import set_alarm
 
 class AlarmPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -47,3 +48,6 @@ class AlarmPage(tk.Frame):
         minute = self.minute_var.get()
         am_pm = self.am_pm_var.get()
         print(f"Time Set: {hour}:{minute} {am_pm}")
+
+        message = f"{hour}:{minute}{am_pm}"
+        set_alarm(1, message)

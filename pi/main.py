@@ -2,6 +2,7 @@ import tkinter as tk
 from views.HomePage import HomePage
 from views.AlarmPage import AlarmPage
 from views.IntercomPage import IntercomPage
+from comm.rxtx import setup, receive_message, send_message, PERIPHERAL_ADDRESS
 
 class MainApp(tk.Tk):
     def __init__(self):
@@ -31,5 +32,8 @@ class MainApp(tk.Tk):
         frame.tkraise()
 
 if __name__ == "__main__":
+    # Initialize communication module
+    setup()
+
     app = MainApp()
     app.mainloop()
