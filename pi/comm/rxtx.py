@@ -38,6 +38,6 @@ def receive_message():
         received_message = radio.read(radio.getDynamicPayloadSize())
         return received_message
     
-def set_alarm(id: int, time: str, sound: str):
+def set_alarm(id: int, time: str, sound: str=""):
     message = str(id) + "|" + time
     send_message([id], message)
