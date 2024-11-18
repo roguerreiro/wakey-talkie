@@ -1,7 +1,6 @@
 {
     "peripherals": [
-        {"id": 1, "name": "Room 1"}
+        {"id": 1, "name": "Room 1", "alarm": "7:30AM"}
     ],
-    "alarms": [],
     "messages": []
 }

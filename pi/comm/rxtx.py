@@ -1,8 +1,10 @@
 from pyrf24 import RF24, RF24_PA_LOW
 import RPi.GPIO as GPIO
 import time
+from comm.files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
+FILE_PATH = "~/pi/wakey-talkie/pi/data.json"
 
 # CE and CSN pins for nRF24L01+ on Raspberry Pi
 radio = RF24(17, 0)
@@ -39,5 +41,16 @@ def receive_message():
         return received_message
     
 def set_alarm(id: int, time: str, sound: str=""):
-    message = str(id) + "|" + time
-    send_message([id], message)
+    send_message([id], time)
+
+def get_available_peripherals():
+    data = read_data(FILE_PATH)
+    peripherals = data['peripherals']
+    available = []
+    for peripheral in peripherals:
+        for _ in range(5):
+            sent = send_message([peripheral['id']], "ping", True)
+            if sent:
+                available.append(peripheral)
+                continue
+    return available
