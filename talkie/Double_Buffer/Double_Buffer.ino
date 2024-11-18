@@ -1,4 +1,7 @@
 #define TIMING_PIN 27
+
+#include "esp_task_wdt.h"
+portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
  
 #include <Adafruit_GrayOLED.h>
 #include <gfxfont.h>
@@ -77,16 +80,26 @@ void IRAM_ATTR isr_second_passed()
 
 void IRAM_ATTR isr_play_sample()
 {
-  dacWrite(DAC_OUT, playing_buf[playing_idx]);
-  playing_idx++;
+  portENTER_CRITICAL(&timerMux);
+        
+        
+//  digitalWrite(TIMING_PIN, 1);
+   dacWrite(DAC_OUT, playing_buf[playing_idx]);
+   playing_idx++;
+  Serial.println(playing_idx, DEC);
   if(playing_idx == playing_buf_size) 
   {
     switchBuffers(); 
   }
+//  digitalWrite(TIMING_PIN, 0);
+portEXIT_CRITICAL(&timerMux);
 }
 
 void setup() 
 {
+  esp_task_wdt_deinit(); // Disable watchdog
+  
+
   Serial.begin(115200);
 
   sample = 0;
@@ -111,13 +124,13 @@ void setup()
   display.begin(16); 
   display.flushDisplay();
 
-  displayTimer = timerBegin(1000000); 
-  timerAttachInterrupt(displayTimer, &isr_display_updater);
-  timerAlarm(displayTimer, 5000, true, 0); 
-
-  clockTimer = timerBegin(1000000);
-  timerAttachInterrupt(clockTimer, &isr_second_passed);
-  timerAlarm(clockTimer, 1000000, true, 0);
+//  displayTimer = timerBegin(1000000); 
+//  timerAttachInterrupt(displayTimer, &isr_display_updater);
+//  timerAlarm(displayTimer, 5000, true, 0); 
+//
+//  clockTimer = timerBegin(1000000);
+//  timerAttachInterrupt(clockTimer, &isr_second_passed);
+//  timerAlarm(clockTimer, 1000000, true, 0);
 
   display.setTextColor(randomColor());
   display.setTextSize(1);
@@ -172,7 +185,9 @@ void loop()
   }
   if(filling_buf_size == 0)
   {
+    digitalWrite(TIMING_PIN, 1);
     fillBuffer();
+    digitalWrite(TIMING_PIN, 0);
   }
 }
 
@@ -227,9 +242,10 @@ void playWAV(String fileName)
   if(audioFile.available())
   {
     fillBuffer();
+    switchBuffers();
     sampleTimer = timerBegin(1000000); 
     timerAttachInterrupt(sampleTimer, &isr_play_sample);
-    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+    timerAlarm(sampleTimer, 6200, true, 0); // 1/16000Hz = 62.5us
     Serial.println("WAV file playing");
   }
   
@@ -238,9 +254,11 @@ void playWAV(String fileName)
 
 void fillBuffer()
 {
+  Serial.println("fillBuffer");
   if(audioFile.available())
   {
     filling_buf_size = audioFile.readBytes(filling_buf, BUFFER_SIZE);
+    Serial.println(filling_buf_size, DEC);
   }
   else
   {
@@ -252,6 +270,7 @@ void fillBuffer()
 
 void switchBuffers()
 {
+  Serial.println("switchBuffers()");
   playing_buf_size = filling_buf_size;
   filling_buf_size = 0;
   char *tmp = filling_buf;
