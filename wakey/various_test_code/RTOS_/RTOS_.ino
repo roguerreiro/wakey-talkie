@@ -68,26 +68,26 @@ uint16_t randomColor()
 void formatTime();
 void playWAV(String fileName);
 
-void audioTask(void *parameter)
-{
-  while (audioFile.available()) {
-    if (sampleFlag) {
-      sampleFlag = false;  // Clear the flag
-
-      digitalWrite(TIMING_PIN, 1);
-      // Read one byte (sample) from the audio file and write to DAC
-      int sample = audioFile.read();
-      dacWrite(DAC_OUT, sample);
-      digitalWrite(TIMING_PIN, 0);
-      
-      // You can add additional processing here if needed, such as buffering
-    }
- }
-
-  // Close the file when done
-  audioFile.close();
-  vTaskDelete(NULL);  // End the task
-}
+//void audioTask(void *parameter)
+//{
+//  while (audioFile.available()) {
+//    if (sampleFlag) {
+//      sampleFlag = false;  // Clear the flag
+//
+//      digitalWrite(TIMING_PIN, 1);
+//      // Read one byte (sample) from the audio file and write to DAC
+//      int sample = audioFile.read();
+//      dacWrite(DAC_OUT, sample);
+//      digitalWrite(TIMING_PIN, 0);
+//      
+//      // You can add additional processing here if needed, such as buffering
+//    }
+// }
+//
+//  // Close the file when done
+//  audioFile.close();
+//  vTaskDelete(NULL);  // End the task
+//}
 
 void displayTask(void *parameter) 
 {
@@ -187,7 +187,7 @@ void setup()
   xTaskCreatePinnedToCore(clockTask, "TimekeepingTask", 1024, NULL, 1, NULL, 1);
 
 
-  playWAV("/hitsdifferent8.wav");
+//  playWAV("/hitsdifferent8.wav");
 
 }
 
@@ -277,5 +277,5 @@ void playWAV(String fileName)
   audioFile.seek(44); // skip WAV header
 
   // start task
-    xTaskCreatePinnedToCore(audioTask, "AudioTask", 2048, NULL, 3, NULL, 1);
+//    xTaskCreatePinnedToCore(audioTask, "AudioTask", 4096, NULL, 3, NULL, 1);
 }
