@@ -1,7 +1,7 @@
 from pyrf24 import RF24, RF24_PA_LOW
 import RPi.GPIO as GPIO
 import time
-from files import read_data, save_data
+from comm.files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
 FILE_PATH = "~/pi/wakey-talkie/pi/data.json"
@@ -26,7 +26,7 @@ def send_message(ids, message, acks=True):
     radio.stopListening()  # Stop listening to transmit data
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
     for id in ids:
-        message = str(id) + "|" + message
+        message = str(id) + "|" + str(message)
     success = radio.write(message.encode('utf-8'))  # Send message
     if success:
         print("Message sent successfully")
