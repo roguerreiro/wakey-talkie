@@ -1,13 +1,6 @@
-#define TIMING_PIN 27
-
-#include "esp_task_wdt.h"
-portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
- 
+#include <Adafruit_GFX.h>
 #include <Adafruit_GrayOLED.h>
 #include <gfxfont.h>
-#include <Adafruit_GFX.h>
-#include <Adafruit_SPITFT.h>
-#include <Adafruit_SPITFT_Macros.h>
 #include <PxMatrix.h>
 #include <WiFi.h>
 #include <Arduino.h>
@@ -41,8 +34,9 @@ int sample;
 #define P_OE 15
 #define DAC_OUT 25
 
-PxMATRIX display(32,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
+#define TIMING_PIN 27
 
+PxMATRIX display(32,32,P_LAT, P_OE,P_A,P_B,P_C,P_D);
 #define RANDOM_PIN 34
 
 // Time Setup
@@ -54,6 +48,7 @@ hw_timer_t *sampleTimer = NULL;
 File audioFile; 
 char *playing_buf;
 char *filling_buf;
+char *tmp;
 int playing_buf_size = 0;
 int filling_buf_size = 0;
 int playing_idx = 0;
@@ -80,26 +75,16 @@ void IRAM_ATTR isr_second_passed()
 
 void IRAM_ATTR isr_play_sample()
 {
-  portENTER_CRITICAL(&timerMux);
-        
-        
-//  digitalWrite(TIMING_PIN, 1);
-   dacWrite(DAC_OUT, playing_buf[playing_idx]);
-   playing_idx++;
-  Serial.println(playing_idx, DEC);
+  dacWrite(DAC_OUT, playing_buf[playing_idx]);
+  playing_idx++;
   if(playing_idx == playing_buf_size) 
   {
-    switchBuffers(); 
+    switchBuffers();
   }
-//  digitalWrite(TIMING_PIN, 0);
-portEXIT_CRITICAL(&timerMux);
 }
 
 void setup() 
 {
-  esp_task_wdt_deinit(); // Disable watchdog
-  
-
   Serial.begin(115200);
 
   sample = 0;
@@ -124,13 +109,13 @@ void setup()
   display.begin(16); 
   display.flushDisplay();
 
-//  displayTimer = timerBegin(1000000); 
-//  timerAttachInterrupt(displayTimer, &isr_display_updater);
-//  timerAlarm(displayTimer, 5000, true, 0); 
-//
-//  clockTimer = timerBegin(1000000);
-//  timerAttachInterrupt(clockTimer, &isr_second_passed);
-//  timerAlarm(clockTimer, 1000000, true, 0);
+  displayTimer = timerBegin(1000000); 
+  timerAttachInterrupt(displayTimer, &isr_display_updater);
+  timerAlarm(displayTimer, 5000, true, 0); 
+
+  clockTimer = timerBegin(1000000);
+  timerAttachInterrupt(clockTimer, &isr_second_passed);
+  timerAlarm(clockTimer, 1000000, true, 0);
 
   display.setTextColor(randomColor());
   display.setTextSize(1);
@@ -165,7 +150,6 @@ void setup()
   filling_buf = (char *)malloc(BUFFER_SIZE);
 
   playWAV("/hitsdifferent8.wav");
-
 }
 
 void loop() 
@@ -245,7 +229,7 @@ void playWAV(String fileName)
     switchBuffers();
     sampleTimer = timerBegin(1000000); 
     timerAttachInterrupt(sampleTimer, &isr_play_sample);
-    timerAlarm(sampleTimer, 6200, true, 0); // 1/16000Hz = 62.5us
+    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
     Serial.println("WAV file playing");
   }
   
@@ -265,12 +249,12 @@ void fillBuffer()
     // TODO: maybe check for a repeat?
     timerDetachInterrupt(sampleTimer);
     audioFile.close();
+    filling_buf_size = -1;
   }
 }
 
-void switchBuffers()
+void IRAM_ATTR switchBuffers()
 {
-  Serial.println("switchBuffers()");
   playing_buf_size = filling_buf_size;
   filling_buf_size = 0;
   char *tmp = filling_buf;

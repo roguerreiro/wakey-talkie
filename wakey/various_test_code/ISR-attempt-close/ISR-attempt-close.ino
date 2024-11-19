@@ -51,73 +51,33 @@ hw_timer_t *sampleTimer = NULL;
 
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
-void IRAM_ATTR isr_play_sample()
-{
-  sampleFlag = true;
-}
 
 uint16_t randomColor()
 {
   return random(65535);
 }
 
-//  dacWrite(DAC_OUT, sample);
-//  sampleFlag = 1;
+void IRAM_ATTR isr_display_updater()
+{
+  displayFlag = 1;
+}
 
+void IRAM_ATTR isr_second_passed()
+{
+  secondFlag = 1;
+}
+
+void IRAM_ATTR isr_play_sample()
+{
+  digitalWrite(TIMING_PIN, 1);
+//  int sample = 35;//audioFile.read(); 
+  dacWrite(DAC_OUT, sample);
+  sampleFlag = 1;
+  digitalWrite(TIMING_PIN, 0);
+}
 
 void formatTime();
 void playWAV(String fileName);
-
-void audioTask(void *parameter)
-{
-  while (audioFile.available()) {
-    if (sampleFlag) {
-      sampleFlag = false;  // Clear the flag
-
-      digitalWrite(TIMING_PIN, 1);
-      // Read one byte (sample) from the audio file and write to DAC
-      int sample = audioFile.read();
-      dacWrite(DAC_OUT, sample);
-      digitalWrite(TIMING_PIN, 0);
-      
-      // You can add additional processing here if needed, such as buffering
-    }
- }
-
-  // Close the file when done
-  audioFile.close();
-  vTaskDelete(NULL);  // End the task
-}
-
-void displayTask(void *parameter) 
-{
-    TickType_t lastWakeTime = xTaskGetTickCount(); // Capture current time in ticks
-    const TickType_t interval = 5 / portTICK_PERIOD_MS; // 5 ms interval
-
-    while (1) {
-//      digitalWrite(TIMING_PIN, 1);
-        display.display(10);
-//        digitalWrite(TIMING_PIN, 0);
-        // Delay until the next 5 ms period
-        vTaskDelayUntil(&lastWakeTime, interval);
-    }
-}
-
-void clockTask(void *parameter) 
-{
-    const TickType_t xDelay = 1000 / portTICK_PERIOD_MS; // 1000 ms = 1 second
-    while (1) {
-        // Clock task work
-        
-      second++;
-      display.clearDisplay();
-      formatTime();
-      display.print(the_time);
-        // Delay for 1 second
-        vTaskDelay(xDelay); // This delays the task for 1 second
-    }
-}
-
 
 void setup() 
 {
@@ -145,13 +105,13 @@ void setup()
   display.begin(16); 
   display.flushDisplay();
 
-//  displayTimer = timerBegin(1000000); 
-//  timerAttachInterrupt(displayTimer, &isr_display_updater);
-//  timerAlarm(displayTimer, 5000, true, 0); 
-//
-  sampleTimer = timerBegin(1000000);
-  timerAttachInterrupt(sampleTimer, &isr_play_sample);
-  timerAlarm(sampleTimer, 62, true, 0);
+  displayTimer = timerBegin(1000000); 
+  timerAttachInterrupt(displayTimer, &isr_display_updater);
+  timerAlarm(displayTimer, 5000, true, 0); 
+
+  clockTimer = timerBegin(1000000);
+  timerAttachInterrupt(clockTimer, &isr_second_passed);
+  timerAlarm(clockTimer, 1000000, true, 0);
 
   display.setTextColor(randomColor());
   display.setTextSize(1);
@@ -182,40 +142,35 @@ void setup()
     return;
   }
 
-//  xTaskCreatePinnedToCore(audioTask, "AudioTask", 2048, NULL, 3, NULL, 1);
-  xTaskCreatePinnedToCore(displayTask, "DisplayTask", 2048, NULL, 2, NULL, 1);
-  xTaskCreatePinnedToCore(clockTask, "TimekeepingTask", 1024, NULL, 1, NULL, 1);
-
-
   playWAV("/hitsdifferent8.wav");
 
 }
 
 void loop() 
 {
-//  if(sampleFlag)
-//  {
-////    digitalWrite(TIMING_PIN, 1);
-//    sample = audioFile.read(); 
-////    dacWrite(DAC_OUT, sample);
-//    sampleFlag = false;
-////    digitalWrite(TIMING_PIN, 0);
-//  }
-//  if(displayFlag)
-//  {
-//    display.display(10);
-//    displayFlag = false;
-//  }
-//  if(secondFlag)
-//  {
-////    digitalWrite(TIMING_PIN, 1);
-//    second++;
-//    display.clearDisplay();
-//    formatTime();
-//    display.print(the_time);
-//    secondFlag = false;
-////    digitalWrite(TIMING_PIN, 0);
-//  }
+  if(sampleFlag)
+  {
+//    digitalWrite(TIMING_PIN, 1);
+    sample = audioFile.read(); 
+//    dacWrite(DAC_OUT, sample);
+    sampleFlag = false;
+//    digitalWrite(TIMING_PIN, 0);
+  }
+  if(displayFlag)
+  {
+    display.display(10);
+    displayFlag = false;
+  }
+  if(secondFlag)
+  {
+//    digitalWrite(TIMING_PIN, 1);
+    second++;
+    display.clearDisplay();
+    formatTime();
+    display.print(the_time);
+    secondFlag = false;
+//    digitalWrite(TIMING_PIN, 0);
+  }
 }
 
 void formatTime()
@@ -273,9 +228,6 @@ void playWAV(String fileName)
     timerAttachInterrupt(sampleTimer, &isr_play_sample);
     Serial.println("interrupt attached");
   }
-  timerAlarm(sampleTimer, 124, true, 0); // 1/16000Hz = 62.5us
+  timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
   audioFile.seek(44); // skip WAV header
-
-  // start task
-    xTaskCreatePinnedToCore(audioTask, "AudioTask", 2048, NULL, 3, NULL, 1);
 }
