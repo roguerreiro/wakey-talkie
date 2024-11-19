@@ -4,6 +4,7 @@ import numpy as np
 from scipy.io.wavfile import write
 import wave
 import queue
+from rxtx import send_message
 
 # Recording parameters
 SAMPLE_RATE = 44100
@@ -19,6 +20,7 @@ def audio_callback(indata, frames, time, status):
     if status:
         print(status)  # print any errors
     audio_queue.put(indata.copy())  # Add the chunk to the queue
+    print(indata)
 
 # Start recording in real-time
 def start_recording():

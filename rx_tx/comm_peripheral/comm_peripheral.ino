@@ -82,4 +82,5 @@ void loop() {
 // italian notes bc i don't wanna open another doc
 // Laura: immigrazione e come la media mostra delle informazioni sbagliati; molto alarmista, poco reale
 // Mattia a Laura: "Di cosa parla il vostro progetto?", "Secondo te, che cosa qualcuno dovrebbe fare per risolvere questo problema?"
-// Laura a Mattia:
+// Mattia: immigrazione giovanile e come gli immigrati di oggi sono meno povere che nel passato
+// Laura a Mattia: 'E voi, che cosa avete studiato?", ""
