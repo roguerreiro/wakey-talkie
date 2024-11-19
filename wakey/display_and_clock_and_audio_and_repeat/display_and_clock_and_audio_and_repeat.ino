@@ -59,7 +59,7 @@ int repeatCount;
 
 // alarm time format: hhhh mmmm mmmm 000a
 // e.g. 7:15am        0111 0000 1111 0001
-uint16_t alarmTime = 0; 
+//uint16_t alarmTime = 0x; 
 uint16_t ALARM_MINUTES = 0x0FF0;
 uint16_t ALARM_HOURS = 0xF000;
 uint16_t ALARM_AM = 0x0001;
@@ -189,18 +189,27 @@ void loop()
     formatTime();
     display.print(the_time);
     secondFlag = false;
+    checkForAlarm();
   }
   if(filling_buf_size == 0)
   {
-//    digitalWrite(TIMING_PIN, 1);
     fillBuffer();
-//    digitalWrite(TIMING_PIN, 0);
   }
   if(stopFlag)
   {
     stopAlarm();
     stopFlag = false;
   }
+}
+
+void checkForAlarm()
+{
+  Serial.println("Checking for alarm...");
+  Serial.print("minute: ");
+  Serial.println((uint8_t)minute);
+  Serial.print("(alarmTime && ALARM_MINUTE) >> 4: ");
+  Serial.println((uint8_t)(alarmTime && ALARM_MINUTES) >> 4);
+//  if((uint8_t)minute == (uint8_t)(alarmTime && ALARM_MINUTE) >> 4));
 }
 
 void formatTime()
