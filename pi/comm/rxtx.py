@@ -4,10 +4,10 @@ import time
 from comm.files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
-FILE_PATH = "~/pi/wakey-talkie/pi/data.json"
+FILE_PATH = "~/wakey-talkie/pi/data.json"
 
 # CE and CSN pins for nRF24L01+ on Raspberry Pi
-radio = RF24(17, 0)
+radio = RF24(17, 24)
 
 # Define hub address
 hubAddress = 0xF0F0F0F0D2   # Address to receive responses from the peripheral

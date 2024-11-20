@@ -1,8 +1,7 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
-import time
-from comm.audio import AudioTransmitter 
+from comm.audio import AudioTransmitter  # Ensure this path is correct
 
 class IntercomPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -38,54 +37,51 @@ class IntercomPage(tk.Frame):
             command=self.stop_recording
         )
         self.stop_button.pack(side="left", padx=10, pady=10)
-        self.stop_button.config(state="disabled")
+        self.stop_button.config(state="disabled")  # Initially disabled
 
-        # Countdown display
-        self.countdown_label = tk.Label(
-            main_frame, text="", font=("Arial", 36), fg="white", bg="black"
+        # Status display
+        self.status_label = tk.Label(
+            main_frame, text="Idle", font=("Arial", 24), fg="white", bg="black"
         )
-        self.countdown_label.pack(expand=True)
+        self.status_label.pack(expand=True)
 
         # Instance variables
         self.recording_thread = None
         self.is_recording = False
         self.audio_transmitter = AudioTransmitter([1])
-        self.record_duration = 10 
 
     def start_recording(self):
+        """Start recording when the button is clicked."""
         if self.is_recording:
             return  # Prevent multiple recordings at once
 
         self.is_recording = True
-        self.record_button.config(state="disabled")  # Disable button during recording
-        
-        # Start countdown and recording in separate threads
+        self.record_button.config(state="disabled")  # Disable Start button
+        self.stop_button.config(state="normal")  # Enable Stop button
+        self.status_label.config(text="Recording...")
+
+        # Start recording in a separate thread
         self.recording_thread = threading.Thread(target=self.record_audio)
         self.recording_thread.start()
-
-        countdown_thread = threading.Thread(target=self.run_countdown)
-        countdown_thread.start()
 
     def record_audio(self):
         """Start audio recording."""
         try:
             self.audio_transmitter.start_recording()
-            time.sleep(self.record_duration)  # Simulate the recording duration
+            while self.is_recording:
+                pass  # Keep the recording active while the flag is True
             self.audio_transmitter.stop_recording()
+        except Exception as e:
+            self.status_label.config(text=f"Error: {e}")
         finally:
-            self.is_recording = False
-            self.record_button.config(state="normal")  
-            self.stop_button.config(state="disabled")
-
-    def run_countdown(self):
-        """Update the countdown label."""
-        for i in range(self.record_duration, 0, -1):
-            self.countdown_label.config(text=f"Recording... {i}s")
-            time.sleep(1)
-
-        self.countdown_label.config(text="Recording Complete!")
+            self.stop_recording()  # Ensure cleanup
 
     def stop_recording(self):
+        """Stop recording when the button is clicked."""
+        if not self.is_recording:
+            return  # Ignore if already stopped
+
         self.is_recording = False
-
-
+        self.record_button.config(state="normal")  # Enable Start button
+        self.stop_button.config(state="disabled")  # Disable Stop button
+        self.status_label.config(text="Recording Stopped")
