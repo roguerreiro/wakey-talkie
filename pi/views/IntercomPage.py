@@ -1,12 +1,16 @@
 import tkinter as tk
 from tkinter import ttk
 import threading
-from comm.audio import AudioTransmitter  # Ensure this path is correct
+import RPi.GPIO as GPIO
+from comm.audio import AudioTransmitter  # Ensure the path is correct
+
+# GPIO setup
+BUTTON_PIN = 27  # GPIO pin connected to the button
 
 class IntercomPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
-        
+
         # Create a paned window
         pane = tk.PanedWindow(self, orient=tk.VERTICAL)
         pane.pack(fill="both", expand=True)
@@ -19,25 +23,10 @@ class IntercomPage(tk.Frame):
 
         # Back button
         back_button = ttk.Button(
-            button_frame, text="Back", 
+            button_frame, text="Back",
             command=lambda: controller.show_frame("HomePage")
         )
         back_button.pack(side="left", padx=10, pady=10)
-
-        # Start Recording Button
-        self.record_button = ttk.Button(
-            button_frame, text="Start Recording", 
-            command=self.start_recording
-        )
-        self.record_button.pack(side="right", padx=10, pady=10)
-
-        # Stop Recording Button
-        self.stop_button = ttk.Button(
-            button_frame, text="Stop Recording", 
-            command=self.stop_recording
-        )
-        self.stop_button.pack(side="left", padx=10, pady=10)
-        self.stop_button.config(state="disabled")  # Initially disabled
 
         # Status display
         self.status_label = tk.Label(
@@ -46,20 +35,32 @@ class IntercomPage(tk.Frame):
         self.status_label.pack(expand=True)
 
         # Instance variables
-        self.recording_thread = None
         self.is_recording = False
         self.audio_transmitter = AudioTransmitter([1])
+        self.recording_thread = None
+
+        # Setup GPIO
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+
+        # Add interrupt for button
+        GPIO.add_event_detect(BUTTON_PIN, GPIO.BOTH, callback=self.handle_button_event, bouncetime=200)
+
+    def handle_button_event(self, channel):
+        """Handle rising and falling edge events on the button."""
+        if GPIO.input(BUTTON_PIN):  # Button pressed
+            self.start_recording()
+        else:  # Button released
+            self.stop_recording()
 
     def start_recording(self):
-        """Start recording when the button is clicked."""
+        """Start recording when the button is pressed."""
         if self.is_recording:
             return  # Prevent multiple recordings at once
 
         self.is_recording = True
-        self.record_button.config(state="disabled")  # Disable Start button
-        self.stop_button.config(state="normal")  # Enable Stop button
         self.status_label.config(text="Recording...")
-
+        
         # Start recording in a separate thread
         self.recording_thread = threading.Thread(target=self.record_audio)
         self.recording_thread.start()
@@ -69,19 +70,22 @@ class IntercomPage(tk.Frame):
         try:
             self.audio_transmitter.start_recording()
             while self.is_recording:
-                pass  # Keep the recording active while the flag is True
+                pass  # Keep recording active while the flag is True
             self.audio_transmitter.stop_recording()
         except Exception as e:
             self.status_label.config(text=f"Error: {e}")
         finally:
-            self.stop_recording()  # Ensure cleanup
+            if not self.is_recording:
+                self.status_label.config(text="Recording Stopped")
 
     def stop_recording(self):
-        """Stop recording when the button is clicked."""
+        """Stop recording when the button is released."""
         if not self.is_recording:
             return  # Ignore if already stopped
 
         self.is_recording = False
-        self.record_button.config(state="normal")  # Enable Start button
-        self.stop_button.config(state="disabled")  # Disable Stop button
         self.status_label.config(text="Recording Stopped")
+
+    def cleanup(self):
+        """Clean up GPIO and other resources."""
+        GPIO.cleanup()
