@@ -2,7 +2,7 @@ import sounddevice as sd
 import numpy as np
 from scipy.io.wavfile import write
 import queue
-from rxtx import send_message
+from comm.rxtx import send_message
 
 # Recording parameters
 SAMPLE_RATE = 44100
@@ -11,11 +11,12 @@ DURATION = 5  # Total duration for recording in seconds
 CHUNK_SIZE = 1024  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
-class AudioTransmitter:
+class Microphone:
     def __init__(self, id_list):
         self.ids = id_list
         self.audio_queue = queue.Queue()
         self.stream = None  # Initialize stream as None
+        self.mode = "transmit"
 
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
@@ -32,7 +33,7 @@ class AudioTransmitter:
         self.audio_queue.put(indata.copy())
 
     # Start recording in real-time
-    def start_recording(self):
+    def start_recording(self, type="transmit"):
         try:
             self.audio_queue.queue.clear()  # Clear any previous data in the queue
 
@@ -75,10 +76,10 @@ class AudioTransmitter:
 # Example usage:
 if __name__ == "__main__":
     # Replace with actual peripheral IDs
-    peripheral_ids = ["Peripheral_1", "Peripheral_2"]
+    peripheral_ids = [1]
 
-    transmitter = AudioTransmitter(peripheral_ids)
-    transmitter.start_recording()
+    transmitter = Microphone(peripheral_ids)
+    transmitter.start_recording(type="save")
 
     # Record for a fixed duration, then stop
     try:
