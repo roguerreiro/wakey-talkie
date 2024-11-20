@@ -40,6 +40,10 @@ def receive_message():
         received_message = radio.read(radio.getDynamicPayloadSize())
         return received_message
     
+def send_audio(sample):
+    radio.openWritingPipe(PERIPHERAL_ADDRESS)
+    radio.write(sample.encode('utf-8'), noAck=True)
+
 def set_alarm(id: int, time: str, sound: str=""):
     send_message([id], time)
 
