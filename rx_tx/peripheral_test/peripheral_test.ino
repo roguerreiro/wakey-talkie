@@ -56,10 +56,7 @@ void receive_message(){
    if (radio.available()) {
     char receivedMessage[32] = "";
     radio.read(&receivedMessage, sizeof(receivedMessage));
-    
-    radio.stopListening();
-    for (int i =  0; i < 
-    radio.startListening();
+    fillBuffer(receivedMessage, sizeof(receivedMessage));
   }
 }
 
@@ -83,10 +80,12 @@ void send_message(){
 
 void loop() 
 {
+  
   if(filling_buf_size == 0)
   {
+    
     // call function that receives a packet and returns the pointer and the length
-    fillBuffer(uint8_t *msg, uint8_t msg_len);
+    fillBuffer();
   }
 }
 
@@ -94,4 +93,14 @@ void fillBuffer(uint8_t *msg, uint8_t msg_len)
 {
   memcpy(filling_buf, msg, msg_len);
   filling_buf_size = msg_len;
+}
+
+void IRAM_ATTR switchBuffers()
+{
+  playing_buf_size = filling_buf_size;
+  filling_buf_size = 0;
+  uint8_t *tmp = filling_buf;
+  filling_buf = playing_buf;
+  playing_buf = tmp;
+  playing_idx = 0;
 }
