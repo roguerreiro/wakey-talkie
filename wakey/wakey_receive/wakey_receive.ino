@@ -41,22 +41,16 @@ volatile bool stopFlag = false;
 #define STOP_BTN 21
 
 // Receiver/Transmitter
-#define CE 5
-#define CSN 2
+#define CE 2
+#define CSN 5
 #define CLK 18
 #define MOSI 23
 #define MISO 19
 
-// HSPI Pins
-// #define HSPI_CLK  14
-// #define HSPI_MISO 12
-// #define HSPI_MOSI 13
-// #define HSPI_SS   4
-
 SPIClass customSPI (VSPI);
 RF24 radio(CE, CSN);
 
-SPIClass hspi(HSPI); // Instantiate HSPI
+// SPIClass hspi(HSPI); // Instantiate HSPI
 
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
 const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
@@ -64,7 +58,7 @@ void rxSetup();
 void send_message();
 void receive_message();
 
-PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D, hspi);
+PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 
 // Time Setup
 hw_timer_t *displayTimer = NULL;
@@ -132,21 +126,14 @@ void setup()
   //disable unsed SPI pins
   // hspi.end();
   // hspi.begin(HSPI_CLK, HSPI_MISO, HSPI_MOSI, HSPI_SS);
-  display.spi_init();
-  display.begin();
-  display.setTextColor(display.color565(255, 0, 0));
-  display.print("HSPI Test");
+  // display.spi_init();
 
-  //Rx setup
-  rxSetup();
-  delay(5);
+  
 
   // Enable button interrupt
   pinMode(STOP_BTN, INPUT);
   attachInterrupt(STOP_BTN, isr_stop_pressed, RISING);
 
-  sample = 0;
-  // pinMode(TIMING_PIN, OUTPUT);
   // connect to WiFi
   Serial.printf("Connecting to %s ", ssid);
   WiFi.begin(ssid, password);
@@ -206,6 +193,11 @@ void setup()
   playing_buf = (char *)malloc(BUFFER_SIZE);
   filling_buf = (char *)malloc(BUFFER_SIZE);
 
+  //Rx setup
+  rxSetup();
+  Serial.print("After rxSetup(), isChipConnected()? ");
+  Serial.println(radio.isChipConnected());
+
 //  triggerAlarm("/hitsdifferent8.wav", 3);
 }
 
@@ -235,7 +227,8 @@ void loop()
     stopAlarm();
     stopFlag = false;
   }
-
+//  Serial.print("isChipConnected()? ");
+//  Serial.println(radio.isChipConnected());
   receive_message();
 }
 
@@ -355,9 +348,12 @@ void IRAM_ATTR switchBuffers()
   playing_idx = 0;
 }
 
-void receive_message(){
+void receive_message()
+{
   //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-   if (radio.available()) {
+   if (radio.available()) 
+   {
+    Serial.println("radio.available() return true.");
     char receivedMessage[32] = "";
     radio.read(&receivedMessage, sizeof(receivedMessage));
     radio.stopListening();
@@ -365,7 +361,11 @@ void receive_message(){
     Serial.println(receivedMessage);
     radio.startListening();
     Serial.println(radio.isChipConnected());
-    }
+   }
+//   else
+//   {
+//    Serial.println("radio.available() returned false.");
+//   }
 
     //SPI.endTransaction();  // End SPI transaction
     // Ensure the module remains in listening mode
@@ -400,8 +400,9 @@ void rxSetup()
     Serial.println("Failed to initialize radio");
      while (1); // Halt if initialization fails
   }
-  else{
-    Serial.println("radio is connected");
+  else
+  {
+    Serial.println("Radio is connected");
   }
   
  radio.setPALevel(RF24_PA_LOW);
@@ -410,10 +411,12 @@ void rxSetup()
  radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
  radio.startListening();
  
- if (radio.isChipConnected()){
-  Serial.println("Chip is connected");
+ if (radio.isChipConnected())
+ {
+  Serial.println("Chip is connected.");
  }
- else{
+ else
+ {
   Serial.println("Chip is not connected");
  }
  delay(5);
