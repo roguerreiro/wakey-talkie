@@ -44,7 +44,8 @@ class IntercomPage(tk.Frame):
         GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
         # Add interrupt for button
-        GPIO.add_event_detect(BUTTON_PIN, GPIO.BOTH, callback=self.handle_button_event, bouncetime=200)
+        GPIO.add_event_detect(BUTTON_PIN, GPIO.RISING, callback=self.start_recording, bouncetime=200)
+        GPIO.add_event_detect(BUTTON_PIN, GPIO.FALLING, callback=self.stop_recording, bouncetime=200)
 
     def handle_button_event(self, channel):
         """Handle rising and falling edge events on the button."""
