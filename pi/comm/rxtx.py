@@ -26,8 +26,8 @@ def send_message(ids, message, encode=True):
     radio.setAutoAck(True)
     radio.stopListening()  # Stop listening to transmit data
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
-    for id in ids:
-        message = str(id) + "|" + str(message)
+    # for id in ids:
+    #     message = str(id) + "|" + str(message)
     if encode:
         message = message.encode('utf-8')
     success = radio.write(message)  # Send message
