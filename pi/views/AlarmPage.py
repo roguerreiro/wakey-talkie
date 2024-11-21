@@ -49,8 +49,8 @@ class AlarmPage(tk.Frame):
         am_pm = self.am_pm_var.get()
         print(f"Time Set: {hour}:{minute} {am_pm}")
 
-        hour_bits = hour & 0b0111
-        minute_bits = minute & 0b00111111
+        hour_bits = int(hour) & 0b0111
+        minute_bits = int(minute) & 0b00111111
         am = am_pm == "AM"
         message = (hour_bits << 12) | (minute_bits << 4) | (am << 3)
         print("{:16b}".format(message))
