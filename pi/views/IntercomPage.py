@@ -2,7 +2,7 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import RPi.GPIO as GPIO
-from comm.audio import AudioTransmitter  # Ensure the path is correct
+from comm.audio_copy import AudioTransmitter  # Ensure the path is correct
 
 # GPIO setup
 BUTTON_PIN = 27  # GPIO pin connected to the button
