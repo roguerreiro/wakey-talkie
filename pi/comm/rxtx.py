@@ -41,8 +41,9 @@ def receive_message():
         return received_message
     
 def send_audio(sample):
+    radio.setAutoAck(False)
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
-    radio.write(sample.encode('utf-8'), noAck=True)
+    radio.write(sample)
 
 def set_alarm(id: int, time: str, sound: str=""):
     send_message([id], time)
