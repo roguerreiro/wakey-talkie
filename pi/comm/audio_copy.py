@@ -26,7 +26,7 @@ class AudioTransmitter:
         audio_bytes = indata.tobytes()
 
         if self.mode == "transmit":
-            for i in range(0, len(audio_bytes, MAX_PACKET_SIZE)):
+            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
                 packet = audio_bytes[i:i + MAX_PACKET_SIZE]
                 send_audio()
         elif self.mode == "save":
