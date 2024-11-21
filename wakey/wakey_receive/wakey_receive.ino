@@ -6,6 +6,8 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include <SPI.h>
+#include <RF24.h>
 
 // Time API Setup
 const char* ssid       = "DukeVisitor";
@@ -35,8 +37,24 @@ volatile bool stopFlag = false;
 // Speaker
 #define DAC_OUT 25
 
-#define TIMING_PIN 27
+// #define TIMING_PIN 5
 #define STOP_BTN 21
+
+// Receiver/Transmitter
+#define CE 2
+#define CSN 5
+#define CLK 18
+#define MOSI 23
+#define MISO 19
+
+SPIClass customSPI (VSPI);
+RF24 radio(CE, CSN);
+
+const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
+const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
+void rxSetup();
+void send_message();
+void receive_message();
 
 PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 
@@ -57,13 +75,14 @@ int playing_idx = 0;
 int sample;
 int repeatCount;
 
-// alarm time format: hhhh mmmm mmmm 000a
-// e.g. 7:15am        0111 0000 1111 0001
-//uint16_t alarmTime = 0x; 
-uint16_t ALARM_MINUTES = 0x0FF0;
-uint16_t ALARM_HOURS = 0xF000;
-uint16_t ALARM_AM = 0x0001;
+// alarm time format: hhhh mmmm mmmm a000
+// e.g. 7:15am        0111 0000 1111 1000
+uint16_t alarm_time = 0xA148; // 10:20am
+#define ALARM_MINUTE(alarm_time) (uint8_t)((alarm_time >> 4) & 0xFF)
+#define ALARM_HOUR(alarm_time) (uint8_t)((alarm_time >> 12) & 0xF)
+#define ALARM_ALARM_AM(alarm_time) (uint8_t)((alarm_time >> 3) & 1);
 
+bool checkAlarmTime();
 void formatTime();
 void playWAV(String fileName);
 void fillBuffer();
@@ -71,6 +90,19 @@ void switchBuffers();
 void triggerAlarm(String fileName, int repeats);
 void stopAlarm();
 void repeatAlarm();
+
+bool checkAlarmTime()
+{
+  if(ALARM_MINUTE(alarm_time) == minute)
+  {
+    if(ALARM_HOUR(alarm_time) == hour)
+    {
+      // todo: add am/pm
+      return true;
+    }
+  }
+  return false;
+}
 
 uint16_t randomColor()
 {
@@ -110,9 +142,6 @@ void setup()
   pinMode(STOP_BTN, INPUT);
   attachInterrupt(STOP_BTN, isr_stop_pressed, RISING);
 
-  sample = 0;
-  pinMode(TIMING_PIN, OUTPUT);
-
   // connect to WiFi
   Serial.printf("Connecting to %s ", ssid);
   WiFi.begin(ssid, password);
@@ -144,7 +173,8 @@ void setup()
   display.setTextSize(1);
 
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if(!getLocalTime(&timeinfo))
+  {
     Serial.println("Failed to obtain time");
     return;
   }
@@ -172,15 +202,22 @@ void setup()
   playing_buf = (char *)malloc(BUFFER_SIZE);
   filling_buf = (char *)malloc(BUFFER_SIZE);
 
-  triggerAlarm("/hitsdifferent8.wav", 3);
+  //Rx setup
+  rxSetup();
+  Serial.print("After rxSetup(), isChipConnected()? ");
+  Serial.println(radio.isChipConnected());
+
+  triggerAlarm("/wakeywakey.wav", 3);
 }
 
 void loop() 
 {
   if(displayFlag)
   {
+    // digitalWrite(TIMING_PIN, 1);
     display.display(10);
     displayFlag = false;
+    // digitalWrite(TIMING_PIN, 0);
   }
   if(secondFlag)
   {
@@ -189,7 +226,6 @@ void loop()
     formatTime();
     display.print(the_time);
     secondFlag = false;
-    // checkForAlarm();
   }
   if(filling_buf_size == 0)
   {
@@ -200,17 +236,11 @@ void loop()
     stopAlarm();
     stopFlag = false;
   }
+//  Serial.print("isChipConnected()? ");
+//  Serial.println(radio.isChipConnected());
+  receive_message();
 }
 
-// void checkForAlarm()
-// {
-//   Serial.println("Checking for alarm...");
-//   Serial.print("minute: ");
-//   Serial.println((uint8_t)minute);
-//   Serial.print("(alarmTime && ALARM_MINUTE) >> 4: ");
-//   Serial.println((uint8_t)(alarmTime && ALARM_MINUTES) >> 4);
-// //  if((uint8_t)minute == (uint8_t)(alarmTime && ALARM_MINUTE) >> 4));
-// }
 
 void formatTime()
 {
@@ -325,4 +355,78 @@ void IRAM_ATTR switchBuffers()
   filling_buf = playing_buf;
   playing_buf = tmp;
   playing_idx = 0;
+}
+
+void receive_message()
+{
+  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
+   if (radio.available()) 
+   {
+    Serial.println("radio.available() return true.");
+    char receivedMessage[32] = "";
+    radio.read(&receivedMessage, sizeof(receivedMessage));
+    radio.stopListening();
+    Serial.print("Message received: ");
+    Serial.println(receivedMessage);
+    radio.startListening();
+    Serial.println(radio.isChipConnected());
+   }
+//   else
+//   {
+//    Serial.println("radio.available() returned false.");
+//   }
+
+    //SPI.endTransaction();  // End SPI transaction
+    // Ensure the module remains in listening mode
+    radio.startListening();
+   
+}
+
+void send_message(){
+  radio.stopListening();
+  const char response[] = "Hello Hub";
+  bool success = radio.write(&response, sizeof(response));
+
+  if(success){
+     Serial.println("Message sent successfully");
+   }
+
+  else{
+     Serial.println("Message sending failed");
+     delay(5);
+   }
+   radio.openReadingPipe(1,peripheralAddress);
+   radio.startListening(); // Go back to listening mode
+   Serial.println(radio.isChipConnected());
+   delay(5);
+}
+
+void rxSetup()
+{
+  // RX/TX
+  customSPI.begin(CLK, MISO, MOSI, CSN); // Ensure CSN is used here
+  if (!radio.begin(&customSPI)) {
+    Serial.println("Failed to initialize radio");
+     while (1); // Halt if initialization fails
+  }
+  else
+  {
+    Serial.println("Radio is connected");
+  }
+  
+ radio.setPALevel(RF24_PA_LOW);
+ radio.setChannel(75);
+ radio.openReadingPipe(1, peripheralAddress);
+ radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
+ radio.startListening();
+ 
+ if (radio.isChipConnected())
+ {
+  Serial.println("Chip is connected.");
+ }
+ else
+ {
+  Serial.println("Chip is not connected");
+ }
+ delay(5);
 }
