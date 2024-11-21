@@ -2,7 +2,7 @@ import sounddevice as sd
 import numpy as np
 from scipy.io.wavfile import write
 import queue
-from comm.rxtx import send_message
+from comm.rxtx import send_audio
 
 # Recording parameters
 SAMPLE_RATE = 44100
@@ -26,7 +26,7 @@ class AudioTransmitter:
         # Split audio_bytes into chunks of MAX_PACKET_SIZE
         for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
             packet = audio_bytes[i:i + MAX_PACKET_SIZE]
-            send_message(self.ids, packet)  # Send each packet to peripherals
+            send_audio(self.ids, packet)  # Send each packet to peripherals
 
         # Optionally store chunks in the queue for saving to file
         self.audio_queue.put(indata.copy())

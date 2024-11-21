@@ -2,7 +2,7 @@ import sounddevice as sd
 import numpy as np
 from scipy.io.wavfile import write
 import queue
-from comm.rxtx import send_message
+from comm.rxtx import send_audio
 
 # Recording parameters
 SAMPLE_RATE = 44100
@@ -24,16 +24,17 @@ class Microphone:
             print(status)  # Handle any errors
 
         audio_bytes = indata.tobytes()
-        # Split audio_bytes into chunks of MAX_PACKET_SIZE
-        for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
-            packet = audio_bytes[i:i + MAX_PACKET_SIZE]
-            send_message(self.ids, packet)  # Send each packet to peripherals
 
-        # Optionally store chunks in the queue for saving to file
-        self.audio_queue.put(indata.copy())
+        if self.mode == "transmit":
+            for i in range(0, len(audio_bytes, MAX_PACKET_SIZE)):
+                packet = audio_bytes[i:i + MAX_PACKET_SIZE]
+                send_audio()
+        elif self.mode == "save":
+            self.audio_queue.put(indata.copy())
 
     # Start recording in real-time
     def start_recording(self, type="transmit"):
+        self.mode = type
         try:
             self.audio_queue.queue.clear()  # Clear any previous data in the queue
 
@@ -43,8 +44,7 @@ class Microphone:
                 channels=CHANNELS, 
                 callback=self.audio_callback
             )
-            self.stream.start()
-            print("Recording started...")
+            self.stream.start()                
         except Exception as e:
             print(f"Error starting recording: {e}")
 
