@@ -11,7 +11,7 @@ DURATION = 5  # Total duration for recording in seconds
 CHUNK_SIZE = 1024  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
-class Microphone:
+class AudioTransmitter:
     def __init__(self, id_list):
         self.ids = id_list
         self.audio_queue = queue.Queue()
@@ -78,7 +78,7 @@ if __name__ == "__main__":
     # Replace with actual peripheral IDs
     peripheral_ids = [1]
 
-    transmitter = Microphone(peripheral_ids)
+    transmitter = AudioTransmitter(peripheral_ids)
     transmitter.start_recording(type="save")
 
     # Record for a fixed duration, then stop
