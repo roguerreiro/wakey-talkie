@@ -75,13 +75,14 @@ int playing_idx = 0;
 int sample;
 int repeatCount;
 
-// alarm time format: hhhh mmmm mmmm 000a
-// e.g. 7:15am        0111 0000 1111 0001
-#define ALARM_HOUR_MASK 0xF000
-#define ALARM_MINUTE_MASK 0x0FF0
-#define ALARM_ALARM_AM 0x000F
-uint16_t alarm_time;
+// alarm time format: hhhh mmmm mmmm a000
+// e.g. 7:15am        0111 0000 1111 1000
+uint16_t alarm_time = 0xA148; // 10:20am
+#define ALARM_MINUTE(alarm_time) (uint8_t)((alarm_time >> 4) & 0xFF)
+#define ALARM_HOUR(alarm_time) (uint8_t)((alarm_time >> 12) & 0xF)
+#define ALARM_ALARM_AM(alarm_time) (uint8_t)((alarm_time >> 3) & 1);
 
+bool checkAlarmTime();
 void formatTime();
 void playWAV(String fileName);
 void fillBuffer();
@@ -89,6 +90,19 @@ void switchBuffers();
 void triggerAlarm(String fileName, int repeats);
 void stopAlarm();
 void repeatAlarm();
+
+bool checkAlarmTime()
+{
+  if(ALARM_MINUTE(alarm_time) == minute)
+  {
+    if(ALARM_HOUR(alarm_time) == hour)
+    {
+      // todo: add am/pm
+      return true;
+    }
+  }
+  return false;
+}
 
 uint16_t randomColor()
 {
@@ -123,13 +137,6 @@ void IRAM_ATTR isr_play_sample()
 void setup() 
 {
   Serial.begin(115200);
-
-  //disable unsed SPI pins
-  // hspi.end();
-  // hspi.begin(HSPI_CLK, HSPI_MISO, HSPI_MOSI, HSPI_SS);
-  // display.spi_init();
-
-  
 
   // Enable button interrupt
   pinMode(STOP_BTN, INPUT);
@@ -166,7 +173,8 @@ void setup()
   display.setTextSize(1);
 
   struct tm timeinfo;
-  if(!getLocalTime(&timeinfo)){
+  if(!getLocalTime(&timeinfo))
+  {
     Serial.println("Failed to obtain time");
     return;
   }
