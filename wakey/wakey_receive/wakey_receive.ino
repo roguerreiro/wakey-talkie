@@ -50,8 +50,6 @@ volatile bool stopFlag = false;
 SPIClass customSPI (VSPI);
 RF24 radio(CE, CSN);
 
-// SPIClass hspi(HSPI); // Instantiate HSPI
-
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
 const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
 void rxSetup();
@@ -79,7 +77,10 @@ int repeatCount;
 
 // alarm time format: hhhh mmmm mmmm 000a
 // e.g. 7:15am        0111 0000 1111 0001
-
+#define ALARM_HOUR_MASK 0xF000
+#define ALARM_MINUTE_MASK 0x0FF0
+#define ALARM_ALARM_AM 0x000F
+uint16_t alarm_time;
 
 void formatTime();
 void playWAV(String fileName);
@@ -198,7 +199,7 @@ void setup()
   Serial.print("After rxSetup(), isChipConnected()? ");
   Serial.println(radio.isChipConnected());
 
-//  triggerAlarm("/hitsdifferent8.wav", 3);
+  triggerAlarm("/wakeywakey.wav", 3);
 }
 
 void loop() 
