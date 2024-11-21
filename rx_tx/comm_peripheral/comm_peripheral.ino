@@ -1,6 +1,8 @@
 #include <SPI.h>
 #include <RF24.h>
 
+#define MESSAGE_SIZE 32
+
 RF24 radio(12, 13); // CE and CSN pins
 
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
@@ -26,9 +28,9 @@ void setup() {
  delay(5);
 }
 
-void receive_message(){
+char *receive_message(){
    if (radio.available()) {
-    char receivedMessage[32] = "";
+    char* receivedMessage = (char*) malloc(MESSAGE_SIZE);
     radio.read(&receivedMessage, sizeof(receivedMessage));
     radio.stopListening();
     Serial.print("Message received: ");
@@ -37,14 +39,13 @@ void receive_message(){
     delay(100);
     digitalWrite(rec_pin, LOW);
     radio.startListening();
-    //Serial.println(radio.isChipConnected());
   }
 }
 
-void send_message(){
+void send_message(char* message, int len){
   radio.stopListening();
   const char response[] = "Hello Hub";
-  bool success = radio.write(&response, sizeof(response));
+  bool success = radio.write(message, len);
 
   if(success){
      Serial.println("Message sent successfully");
@@ -77,3 +78,9 @@ void loop() {
   }
   delay(10);
 }
+
+// italian notes bc i don't wanna open another doc
+// Laura: immigrazione e come la media mostra delle informazioni sbagliati; molto alarmista, poco reale
+// Mattia a Laura: "Di cosa parla il vostro progetto?", "Secondo te, che cosa qualcuno dovrebbe fare per risolvere questo problema?"
+// Mattia: immigrazione giovanile e come gli immigrati di oggi sono meno povere che nel passato
+// Laura a Mattia: 'E voi, che cosa avete studiato?", ""

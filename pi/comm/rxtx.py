@@ -4,7 +4,7 @@ import time
 from comm.files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
-FILE_PATH = "~/pi/wakey-talkie/pi/data.json"
+FILE_PATH = "~/wakey-talkie/pi/data.json"
 
 # CE and CSN pins for nRF24L01+ on Raspberry Pi
 radio = RF24(17, 0)
@@ -21,13 +21,16 @@ def setup():
     radio.setPALevel(RF24_PA_LOW)  # Set power level to low for testing
     radio.setChannel(75)           # Ensure the same channel on both devices
 
-def send_message(ids, message, acks=True):
+def send_message(ids, message, encode=True):
     # Define the message to send
+    radio.setAutoAck(True)
     radio.stopListening()  # Stop listening to transmit data
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
-    for id in ids:
-        message = str(id) + "|" + message
-    success = radio.write(message.encode('utf-8'))  # Send message
+    # for id in ids:
+    #     message = str(id) + "|" + str(message)
+    if encode:
+        message = message.encode('utf-8')
+    success = radio.write(message)  # Send message
     if success:
         print("Message sent successfully")
     else:
@@ -40,8 +43,13 @@ def receive_message():
         received_message = radio.read(radio.getDynamicPayloadSize())
         return received_message
     
-def set_alarm(id: int, time: str, sound: str=""):
-    send_message([id], time)
+def send_audio(sample):
+    radio.setAutoAck(False)
+    radio.openWritingPipe(PERIPHERAL_ADDRESS)
+    radio.write(sample)
+
+def set_alarm(id, time):
+    send_message([id], time, encode=False)
 
 def get_available_peripherals():
     data = read_data(FILE_PATH)
@@ -49,7 +57,7 @@ def get_available_peripherals():
     available = []
     for peripheral in peripherals:
         for _ in range(5):
-            sent = send_message([peripheral['id']], "ping", True)
+            sent = send_message([peripheral['id']], "ping")
             if sent:
                 available.append(peripheral)
                 continue

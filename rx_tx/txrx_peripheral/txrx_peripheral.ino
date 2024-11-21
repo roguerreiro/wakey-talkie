@@ -1,12 +1,9 @@
 #include <SPI.h>
 #include <RF24.h>
 
-
 RF24 radio(12, 13); // CE and CSN pins
 
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
-// const uint64_t peripheralAddress = 0xF0F0F0F0D2LL; // Peripheral's listening address
-// const uint64_t peripheralAddress = 0xF0F0F0F0C3LL; // Peripheral's listening address
 const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
 
 //define pins for the botton, sending and receiving
@@ -20,7 +17,7 @@ void setup() {
  pinMode(send_pin, OUTPUT);
  pinMode(rec_pin, OUTPUT);
  radio.begin();
- radio.setPALevel(RF24_PA_LOW);
+ radio.setPALevel(RF24_PA_MAX);
  radio.setChannel(75);
  radio.openReadingPipe(1, peripheralAddress);
  radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
@@ -64,7 +61,7 @@ void send_message(){
    radio.openReadingPipe(1,peripheralAddress);
    radio.startListening(); // Go back to listening mode
    //Serial.println(radio.isChipConnected());
-   delay(10);
+   delay(5);
 }
 
 
