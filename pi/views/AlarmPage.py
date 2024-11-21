@@ -55,7 +55,12 @@ class AlarmPage(tk.Frame):
         message = (hour_bits << 12) | (minute_bits << 4) | (am << 3)
         print("{:16b}".format(message))
 
-        buffer = struct.pack(">H", message)
+        # Split the 16-bit message into two bytes
+        high_byte = (message >> 8) & 0xFF  # Extract the most significant 8 bits
+        low_byte = message & 0xFF          # Extract the least significant 8 bits
+
+        # Create a bytes object
+        buffer = bytes([high_byte, low_byte])
 
         # message = f"{hour}:{minute}{am_pm}"
         set_alarm(1, buffer)
