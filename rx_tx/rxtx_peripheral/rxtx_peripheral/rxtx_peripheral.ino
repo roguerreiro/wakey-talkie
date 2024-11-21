@@ -1,28 +1,22 @@
 #include <SPI.h>
 #include <RF24.h>
 
-RF24 radio(12, 13); // CE and CSN pins
+#define MOSI 23
+#define MISO 19
+#define CLK 18
+#define CE 5
+#define CSN 2
+
+SPIClass customSPI (VSPI);
+void rxSetup();
+RF24 radio(CE, CSN); // CE and CSN pins
 
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
 const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
 
-//define pins for the botton, sending and receiving
-const int button_pin = 21;
-const int send_pin = 16 ;
-const int rec_pin = 17;
-
 void setup() {
- Serial.begin(9600);
- pinMode(button_pin, INPUT);
- pinMode(send_pin, OUTPUT);
- pinMode(rec_pin, OUTPUT);
- radio.begin();
- radio.setPALevel(RF24_PA_LOW);
- radio.setChannel(75);
- radio.openReadingPipe(1, peripheralAddress);
- radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
- radio.startListening();
- Serial.println(radio.isChipConnected());
+ Serial.begin(115200);
+ rxSetup();
  delay(5);
 }
 
@@ -33,11 +27,8 @@ void receive_message(){
     radio.stopListening();
     Serial.print("Message received: ");
     Serial.println(receivedMessage);
-    digitalWrite(rec_pin, HIGH);
-    delay(100);
-    digitalWrite(rec_pin, LOW);
     radio.startListening();
-    //Serial.println(radio.isChipConnected());
+    Serial.println(radio.isChipConnected());
     }
 }
 
@@ -48,19 +39,15 @@ void send_message(){
 
   if(success){
      Serial.println("Message sent successfully");
-     digitalWrite(send_pin, HIGH);
-     delay(100);
-     digitalWrite(send_pin, LOW);
    }
 
   else{
      Serial.println("Message sending failed");
-     digitalWrite(send_pin, LOW);
      delay(5);
    }
    radio.openReadingPipe(1,peripheralAddress);
    radio.startListening(); // Go back to listening mode
-   //Serial.println(radio.isChipConnected());
+   Serial.println(radio.isChipConnected());
    delay(5);
 }
 
@@ -68,12 +55,36 @@ void send_message(){
 void loop() {
 
   // send_message();
-  if (digitalRead(button_pin)==HIGH){
-    send_message();
-  }
-
-  else{
+  // if (digitalRead(button_pin)==HIGH){
+  //   send_message();
+  // }
     receive_message();
-  }
   delay(10);
+}
+
+void rxSetup()
+{
+  // RX/TX
+  customSPI.begin(CLK, MISO, MOSI, CSN); // Ensure CSN is used here
+  if (!radio.begin(&customSPI)) {
+    Serial.println("Failed to initialize radio");
+     while (1); // Halt if initialization fails
+  }
+  else{
+    Serial.println("radio is connected");
+  }
+  
+ radio.setPALevel(RF24_PA_LOW);
+ radio.setChannel(75);
+ radio.openReadingPipe(1, peripheralAddress);
+ radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
+ radio.startListening();
+ 
+ if (radio.isChipConnected()){
+  Serial.println("Chip is connected");
+ }
+ else{
+  Serial.println("Chip is not connected");
+ }
+ delay(5);
 }

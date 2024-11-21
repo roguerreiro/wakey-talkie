@@ -24,19 +24,19 @@ volatile bool secondFlag = false;
 volatile bool stopFlag = false;
 
 // LED Matrix Display Pins
-#define P_LAT 22
-#define P_A 19
-#define P_B 23
-#define P_C 18
-#define P_D 5
-#define P_OE 15
+#define P_LAT 12
+#define P_A 32
+#define P_B 33
+#define P_C 26
+#define P_D 27
+#define P_OE 22
 #define RANDOM_PIN 34
 
 // Speaker
 #define DAC_OUT 25
 
 #define TIMING_PIN 27
-#define STOP_BTN 32
+#define STOP_BTN 21
 
 PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 
@@ -189,7 +189,7 @@ void loop()
     formatTime();
     display.print(the_time);
     secondFlag = false;
-    checkForAlarm();
+    // checkForAlarm();
   }
   if(filling_buf_size == 0)
   {
@@ -202,15 +202,15 @@ void loop()
   }
 }
 
-void checkForAlarm()
-{
-  Serial.println("Checking for alarm...");
-  Serial.print("minute: ");
-  Serial.println((uint8_t)minute);
-  Serial.print("(alarmTime && ALARM_MINUTE) >> 4: ");
-  Serial.println((uint8_t)(alarmTime && ALARM_MINUTES) >> 4);
-//  if((uint8_t)minute == (uint8_t)(alarmTime && ALARM_MINUTE) >> 4));
-}
+// void checkForAlarm()
+// {
+//   Serial.println("Checking for alarm...");
+//   Serial.print("minute: ");
+//   Serial.println((uint8_t)minute);
+//   Serial.print("(alarmTime && ALARM_MINUTE) >> 4: ");
+//   Serial.println((uint8_t)(alarmTime && ALARM_MINUTES) >> 4);
+// //  if((uint8_t)minute == (uint8_t)(alarmTime && ALARM_MINUTE) >> 4));
+// }
 
 void formatTime()
 {
