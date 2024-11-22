@@ -1,6 +1,6 @@
 import sounddevice as sd
 import numpy as np
-from scipy.io.wavfile import write
+import scipy.io.wavfile as wavfile
 import queue
 from comm.rxtx import send_audio
 
@@ -17,20 +17,31 @@ class AudioTransmitter:
         self.audio_queue = queue.Queue()
         self.stream = None  # Initialize stream as None
         self.mode = "transmit"
+        self.file = "~/wakey-talkie/audio.wakeywakey.wav"
 
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
         if status:
             print(status)  # Handle any errors
 
-        audio_bytes = indata.tobytes()
+        # audio_bytes = indata.tobytes()
 
-        if self.mode == "transmit":
-            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
-                packet = audio_bytes[i:i + MAX_PACKET_SIZE]
-                send_audio(packet)
-        elif self.mode == "save":
-            self.audio_queue.put(indata.copy())
+        # if self.mode == "transmit":
+        #     for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
+        #         packet = audio_bytes[i:i + MAX_PACKET_SIZE]
+        #         send_audio(packet)
+        # elif self.mode == "save":
+        #     self.audio_queue.put(indata.copy())
+    
+
+    def send_wavfile(self):
+        f = wavfile.open(self.file, 'r')
+        while True:
+            samples = f.read_int(1024)
+            for i in range(0, 1024, 32):
+                send_audio(samples[i:i+32])
+        f.close()
+
 
     # Start recording in real-time
     def start_recording(self, type="transmit"):
@@ -68,7 +79,7 @@ class AudioTransmitter:
         if audio_data:
             # Convert to a single numpy array and save as WAV file
             audio_data = np.concatenate(audio_data, axis=0)
-            write("real_time_recording.wav", SAMPLE_RATE, audio_data)
+            wavfile.write("real_time_recording.wav", SAMPLE_RATE, audio_data)
             print("Recording saved as real_time_recording.wav")
         else:
             print("No audio data to save.")
@@ -79,10 +90,11 @@ if __name__ == "__main__":
     peripheral_ids = [1]
 
     transmitter = AudioTransmitter(peripheral_ids)
-    transmitter.start_recording(type="save")
+    transmitter.send_wavfile()
+    # transmitter.start_recording(type="save")
 
-    # Record for a fixed duration, then stop
-    try:
-        sd.sleep(DURATION * 1000)  # Sleep for recording duration (ms)
-    finally:
-        transmitter.stop_recording()
+    # # Record for a fixed duration, then stop
+    # try:
+    #     sd.sleep(DURATION * 1000)  # Sleep for recording duration (ms)
+    # finally:
+    #     transmitter.stop_recording()
