@@ -2,7 +2,7 @@ import sounddevice as sd
 import numpy as np
 import scipy.io.wavfile as wavfile
 import queue
-from comm.rxtx import send_audio
+from rxtx import send_audio
 
 # Recording parameters
 SAMPLE_RATE = 44100

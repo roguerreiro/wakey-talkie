@@ -1,7 +1,7 @@
 from pyrf24 import RF24, RF24_PA_LOW
 import RPi.GPIO as GPIO
 import time
-from comm.files import read_data, save_data
+from files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
 FILE_PATH = "~/wakey-talkie/pi/data.json"
