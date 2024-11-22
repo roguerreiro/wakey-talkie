@@ -20,8 +20,11 @@ uint8_t *playing_buf;
 uint8_t filling_buf_size;
 uint8_t playing_buf_size;
 uint8_t playing_idx;
+uint8_t *receiving_buf;
 
-void fillBuffer();
+#define RECEIVE_BUFFER_SIZE 32
+
+void fillBuffer(uint8_t *msg, uint8_t msg_len);
 void switchBuffers();
 
 void IRAM_ATTR isr_play_sample()
@@ -40,6 +43,7 @@ void setup() {
 
   filling_buf = (uint8_t *)malloc(BUFFER_SIZE);
   playing_buf = (uint8_t *)malloc(BUFFER_SIZE);
+  receiving_buf = (uint8_t*) malloc(RECEIVE_BUFFER_SIZE);
  
  radio.begin();
  radio.setPALevel(RF24_PA_LOW);
@@ -54,9 +58,18 @@ void setup() {
 
 void receive_message(){
    if (radio.available()) {
-    char receivedMessage[32] = "";
+    uint8_t receivedMessage[RECEIVE_BUFFER_SIZE] = "";
     radio.read(&receivedMessage, sizeof(receivedMessage));
-    fillBuffer(receivedMessage, sizeof(receivedMessage));
+    fillBuffer(receivedMessage, RECEIVE_BUFFER_SIZE);
+  }
+}
+
+void receive_audio(uint8_t* buffie) {
+  if (radio.available()) {
+    radio.read(buffie, sizeof(buffie));
+  }
+  else {
+    memset(buffie, 0, RECEIVE_BUFFER_SIZE);
   }
 }
 
@@ -83,9 +96,8 @@ void loop()
   
   if(filling_buf_size == 0)
   {
-    
     // call function that receives a packet and returns the pointer and the length
-    fillBuffer();
+    fillBuffer(receiving_buf, RECEIVE_BUFFER_SIZE);
   }
 }
 
