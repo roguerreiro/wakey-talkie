@@ -5,7 +5,7 @@ import queue
 from comm.rxtx import send_audio
 
 # Recording parameters
-SAMPLE_RATE = 44100
+SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
 CHUNK_SIZE = 1024  # Number of frames per buffer for streaming

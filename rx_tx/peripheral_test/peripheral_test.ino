@@ -17,10 +17,13 @@ int sample = 0;
 
 uint8_t *filling_buf;
 uint8_t *playing_buf;
-uint8_t filling_buf_size;
-uint8_t playing_buf_size;
-uint8_t playing_idx;
+uint8_t filling_buf_size = 0;
+uint8_t playing_buf_size = 0;
+uint8_t playing_idx = 0;
 uint8_t *receiving_buf;
+
+hw_timer_t *sampleTimer = NULL;
+
 
 #define RECEIVE_BUFFER_SIZE 32
 
@@ -45,15 +48,23 @@ void setup() {
   playing_buf = (uint8_t *)malloc(BUFFER_SIZE);
   receiving_buf = (uint8_t*) malloc(RECEIVE_BUFFER_SIZE);
  
- radio.begin();
- radio.setPALevel(RF24_PA_LOW);
- radio.setChannel(75);
- radio.setAutoAck(false);
- radio.openReadingPipe(1, peripheralAddress);
- radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
- radio.startListening();
- Serial.println(radio.isChipConnected());
- delay(5);
+  radio.begin();
+  radio.setPALevel(RF24_PA_LOW);
+  radio.setChannel(75);
+  radio.setAutoAck(false);
+  radio.openReadingPipe(1, peripheralAddress);
+  radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
+  radio.startListening();
+  Serial.println(radio.isChipConnected());
+  delay(5);
+
+  memset(playing_buf, 0, BUFFER_SIZE);
+  playing_buf_size = BUFFER_SIZE;
+
+  sampleTimer = timerBegin(1000000); 
+  timerAttachInterrupt(sampleTimer, &isr_play_sample);
+  timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+  Serial.println("Timer started");
 }
 
 void receive_message(){
@@ -67,9 +78,11 @@ void receive_message(){
 void receive_audio(uint8_t* buffie) {
   if (radio.available()) {
     radio.read(buffie, sizeof(buffie));
+//    Serial.println("Read real audio!");
   }
   else {
     memset(buffie, 0, RECEIVE_BUFFER_SIZE);
+//    Serial.println("Read garbage 0s");
   }
 }
 
@@ -93,16 +106,18 @@ void send_message(){
 
 void loop() 
 {
-  
   if(filling_buf_size == 0)
   {
     // call function that receives a packet and returns the pointer and the length
+    receive_audio(receiving_buf);
     fillBuffer(receiving_buf, RECEIVE_BUFFER_SIZE);
   }
 }
 
 void fillBuffer(uint8_t *msg, uint8_t msg_len)
 {
+//  Serial.print("fillBuffer. msg_len = ");
+//  Serial.println(msg_len);
   memcpy(filling_buf, msg, msg_len);
   filling_buf_size = msg_len;
 }
