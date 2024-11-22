@@ -5,7 +5,7 @@ import queue
 from rxtx import send_audio
 
 # Recording parameters
-SAMPLE_RATE = 44100
+SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
 CHUNK_SIZE = 1024  # Number of frames per buffer for streaming
@@ -17,7 +17,7 @@ class AudioTransmitter:
         self.audio_queue = queue.Queue()
         self.stream = None  # Initialize stream as None
         self.mode = "transmit"
-        self.file = "~/wakey-talkie/audio.wakeywakey.wav"
+        self.file = "~/wakey-talkie/audio/wakeywakey.wav"
 
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
