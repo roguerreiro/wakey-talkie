@@ -1,8 +1,10 @@
 import sounddevice as sd
 import numpy as np
-import scipy.io.wavfile as wavfile
+from scipy.io.wavfile import write
 import queue
 from rxtx import send_audio
+import time
+import wave
 
 # Recording parameters
 SAMPLE_RATE = 16000
@@ -32,15 +34,49 @@ class AudioTransmitter:
         #         send_audio(packet)
         # elif self.mode == "save":
         #     self.audio_queue.put(indata.copy())
-    
 
-    def send_wavfile(self):
-        f = wavfile.open(self.file, 'r')
-        while True:
-            samples = f.read_int(1024)
-            for i in range(0, 1024, 32):
-                send_audio(samples[i:i+32])
-        f.close()
+
+    def read_and_send_audio(self, file_path, send_function):
+        """
+        Reads audio data from a WAV file in chunks of 32 samples and sends it
+        with the correct timing for live playback.
+        
+        :param file_path: Path to the WAV file.
+        :param send_function: Function to send the audio chunk (bytes or list).
+        """
+        # Open the WAV file
+        with wave.open(file_path, 'rb') as wav_file:
+            # Check file properties
+            channels = wav_file.getnchannels()
+            sample_width = wav_file.getsampwidth()
+            frame_rate = wav_file.getframerate()
+
+            if channels != 1:
+                raise ValueError("Audio file must be mono.")
+            if frame_rate != 16000:
+                raise ValueError("Sampling rate must be 16 KHz.")
+
+            print(f"Channels: {channels}, Sample Width: {sample_width}, Frame Rate: {frame_rate}")
+
+            # Read audio data in chunks of 32 samples
+            samples_per_chunk = 32
+            chunk_period = samples_per_chunk / frame_rate  # Time in seconds to wait between chunks
+
+            while True:
+                # Read the next 32 samples
+                frames = wav_file.readframes(samples_per_chunk)
+                if not frames:
+                    break  # End of file
+
+                # Convert frames to integers for processing or send raw
+                dtype = np.int16 if sample_width == 2 else np.uint8
+                samples = np.frombuffer(frames, dtype=dtype)
+
+                # Send the chunk
+                send_function(frames)  # Pass raw bytes to the sending function
+
+                # Wait for the appropriate period
+                time.sleep(chunk_period)
 
 
     # Start recording in real-time
@@ -79,7 +115,7 @@ class AudioTransmitter:
         if audio_data:
             # Convert to a single numpy array and save as WAV file
             audio_data = np.concatenate(audio_data, axis=0)
-            wavfile.write("real_time_recording.wav", SAMPLE_RATE, audio_data)
+            write("real_time_recording.wav", SAMPLE_RATE, audio_data)
             print("Recording saved as real_time_recording.wav")
         else:
             print("No audio data to save.")
@@ -90,7 +126,12 @@ if __name__ == "__main__":
     peripheral_ids = [1]
 
     transmitter = AudioTransmitter(peripheral_ids)
-    transmitter.send_wavfile()
+    file_path = "~/wakey-talkie/audio/hitsdifferent8.wav"
+
+    try:
+        transmitter.read_and_send_audio(file_path, send_audio)
+    except Exception as e:
+        print(f"Error: {e}")
     # transmitter.start_recording(type="save")
 
     # # Record for a fixed duration, then stop
