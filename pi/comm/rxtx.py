@@ -20,6 +20,7 @@ def setup():
     radio.begin()
     radio.setPALevel(RF24_PA_LOW)  # Set power level to low for testing
     radio.setChannel(75)           # Ensure the same channel on both devices
+    print(radio.isChipConnected())
 
 def send_message(ids, message, encode=True):
     # Define the message to send

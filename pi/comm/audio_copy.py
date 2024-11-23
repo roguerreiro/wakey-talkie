@@ -2,7 +2,7 @@ import sounddevice as sd
 import numpy as np
 from scipy.io.wavfile import write
 import queue
-from rxtx import send_audio
+from rxtx import setup, send_audio
 import time
 import wave
 
@@ -19,7 +19,7 @@ class AudioTransmitter:
         self.audio_queue = queue.Queue()
         self.stream = None  # Initialize stream as None
         self.mode = "transmit"
-        self.file = "~/wakey-talkie/audio/wakeywakey.wav"
+        self.file = "/home/pi/wakey-talkie/audio/hitsdifferent8.wav"
 
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
@@ -36,7 +36,7 @@ class AudioTransmitter:
         #     self.audio_queue.put(indata.copy())
 
 
-    def read_and_send_audio(self, file_path, send_function):
+    def read_and_send_audio(self):
         """
         Reads audio data from a WAV file in chunks of 32 samples and sends it
         with the correct timing for live playback.
@@ -45,7 +45,7 @@ class AudioTransmitter:
         :param send_function: Function to send the audio chunk (bytes or list).
         """
         # Open the WAV file
-        with wave.open(file_path, 'rb') as wav_file:
+        with wave.open(self.file, 'rb') as wav_file:
             # Check file properties
             channels = wav_file.getnchannels()
             sample_width = wav_file.getsampwidth()
@@ -69,14 +69,15 @@ class AudioTransmitter:
                     break  # End of file
 
                 # Convert frames to integers for processing or send raw
-                dtype = np.int16 if sample_width == 2 else np.uint8
-                samples = np.frombuffer(frames, dtype=dtype)
-
-                # Send the chunk
-                send_function(frames)  # Pass raw bytes to the sending function
-
+                samples = np.frombuffer(frames, dtype=np.uint8)
+                
                 # Wait for the appropriate period
-                time.sleep(chunk_period)
+                time.sleep(chunk_period/2)
+                
+                # Send the chunk
+                send_audio(frames)  # Pass raw bytes to the sending function
+
+                
 
 
     # Start recording in real-time
@@ -124,12 +125,13 @@ class AudioTransmitter:
 if __name__ == "__main__":
     # Replace with actual peripheral IDs
     peripheral_ids = [1]
+    
+    setup()
 
     transmitter = AudioTransmitter(peripheral_ids)
-    file_path = "~/wakey-talkie/audio/hitsdifferent8.wav"
 
     try:
-        transmitter.read_and_send_audio(file_path, send_audio)
+        transmitter.read_and_send_audio()
     except Exception as e:
         print(f"Error: {e}")
     # transmitter.start_recording(type="save")
