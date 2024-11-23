@@ -7,7 +7,9 @@
 #define CE 15
 #define CSN 2
 #define DAC_OUT 25
-#define BUFFER_SIZE 64
+#define BUFFER_SIZE 1024
+
+#define TIMING_PIN 4
 
 RF24 radio(CE, CSN); // CE and CSN pins
 
@@ -32,17 +34,21 @@ void switchBuffers();
 
 void IRAM_ATTR isr_play_sample()
 {
+//  digitalWrite(TIMING_PIN, 1);
   dacWrite(DAC_OUT, playing_buf[playing_idx]);
   playing_idx++;
   if(playing_idx == playing_buf_size)
   {
     switchBuffers();
   }
+//  digitalWrite(TIMING_PIN, 0);
 }
 
 
 void setup() {
  Serial.begin(9600);
+
+  pinMode(TIMING_PIN, OUTPUT);
 
   filling_buf = (uint8_t *)malloc(BUFFER_SIZE);
   playing_buf = (uint8_t *)malloc(BUFFER_SIZE);
@@ -75,13 +81,14 @@ void receive_message(){
   }
 }
 
-void receive_audio(uint8_t* buffie) {
+bool receive_audio(uint8_t* buffie) {
   if (radio.available()) {
-    radio.read(buffie, sizeof(buffie));
-//    Serial.println("Read real audio!");
+    radio.read(buffie, RECEIVE_BUFFER_SIZE);
+    return true;
   }
   else {
-    memset(buffie, 0, RECEIVE_BUFFER_SIZE);
+    return false;
+//    memset(buffie, 0, RECEIVE_BUFFER_SIZE);
 //    Serial.println("Read garbage 0s");
   }
 }
@@ -109,17 +116,25 @@ void loop()
   if(filling_buf_size == 0)
   {
     // call function that receives a packet and returns the pointer and the length
-    receive_audio(receiving_buf);
-    fillBuffer(receiving_buf, RECEIVE_BUFFER_SIZE);
+    if(receive_audio(receiving_buf))
+    {
+      fillBuffer(receiving_buf, RECEIVE_BUFFER_SIZE);
+    }
+    else
+    {
+      // put in a few zeros or something
+    }
   }
 }
 
 void fillBuffer(uint8_t *msg, uint8_t msg_len)
 {
-//  Serial.print("fillBuffer. msg_len = ");
-//  Serial.println(msg_len);
+//  digitalWrite(TIMING_PIN, 1);
   memcpy(filling_buf, msg, msg_len);
   filling_buf_size = msg_len;
+//  memcpy(filling_buf + filling_buf_size, msg, msg_len);
+//  filling_buf_size = filling_buf_size + msg_len;
+//  digitalWrite(TIMING_PIN, 0);
 }
 
 void IRAM_ATTR switchBuffers()
