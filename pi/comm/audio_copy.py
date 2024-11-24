@@ -9,7 +9,7 @@ import wave
 # Recording parameters
 RECORD_SAMPLE_RATE = 48000
 SEND_SAMPLE_RATE = 16000
-SCALING_FACTOR = RECORD_SAMPLE_RATE / SEND_SAMPLE_RATE
+SCALING_FACTOR = 3
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
 CHUNK_SIZE = 4800  # Number of frames per buffer for streaming
@@ -29,9 +29,8 @@ class AudioTransmitter:
         if status:
             print(status)  # Handle any errors
 
-        
-        audio_bytes = audio_bytes * 32
-        audio_bytes = ((audio_bytes+1)*255/2).astype(np.uint8).tobytes()
+        indata = indata * 32
+        audio_bytes = ((indata+1)*255/2).astype(np.uint8).tobytes()
         if self.mode == "transmit":
             for i in range(0, len(audio_bytes), MAX_PACKET_SIZE * SCALING_FACTOR):
                 packet = audio_bytes[i:i + MAX_PACKET_SIZE * SCALING_FACTOR:SCALING_FACTOR]
