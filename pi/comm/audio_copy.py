@@ -8,7 +8,7 @@ import wave
 import samplerate
 
 # Recording parameters
-RECORD_SAMPLE_RATE = 44100
+RECORD_SAMPLE_RATE = 48000
 SEND_SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
