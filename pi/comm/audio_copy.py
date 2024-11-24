@@ -12,7 +12,7 @@ RECORD_SAMPLE_RATE = 44100
 SEND_SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
-CHUNK_SIZE = 160  # Number of frames per buffer for streaming
+CHUNK_SIZE = 1600  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
 class AudioTransmitter:
@@ -29,7 +29,6 @@ class AudioTransmitter:
         if status:
             print(status)  # Handle any errors
 
-        print(f"Raw indata {indata}")
         converter = samplerate.Resampler('sinc_fastest')
         audio_bytes = converter.process(indata, SEND_SAMPLE_RATE/RECORD_SAMPLE_RATE)
         audio_bytes = audio_bytes * 32
@@ -97,6 +96,7 @@ class AudioTransmitter:
                 samplerate=RECORD_SAMPLE_RATE, 
                 channels=CHANNELS,
                 device=2,
+                blocksize=CHUNK_SIZE,
                 callback=self.audio_callback
             )
             self.stream.start()                
