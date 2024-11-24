@@ -29,11 +29,12 @@ class AudioTransmitter:
         if status:
             print(status)  # Handle any errors
 
-        indata = indata * 32
-        audio_bytes = ((indata+1)*255/2).astype(np.uint8).tobytes()
+        downsampled = indata[0:len(indata):SCALING_FACTOR] # take every 3 samples
+        downsampled = downsampled * 32
+        audio_bytes = ((downsampled+1)*255/2).astype(np.uint8).tobytes()
         if self.mode == "transmit":
-            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE * SCALING_FACTOR):
-                packet = audio_bytes[i:i + MAX_PACKET_SIZE * SCALING_FACTOR:SCALING_FACTOR]
+            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
+                packet = audio_bytes[i:i + MAX_PACKET_SIZE]
                 send_audio(packet)
         elif self.mode == "save":
             self.audio_queue.put(indata.copy())

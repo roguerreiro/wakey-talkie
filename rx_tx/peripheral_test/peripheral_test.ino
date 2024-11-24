@@ -133,13 +133,13 @@ void fillBuffer(uint8_t *msg, uint8_t msg_len)
 //  digitalWrite(TIMING_PIN, 1);
   memcpy(filling_buf, msg, msg_len);
   filling_buf_size = msg_len;
-  Serial.print("Buffer: ");
-  for(int i=0; i<32; i++)
-  {
-    Serial.print(filling_buf[i]);
-    Serial.print(", ");
-  }
-  Serial.println("\n");
+//  Serial.print("Buffer: ");
+//  for(int i=0; i<32; i++)
+//  {
+//    Serial.print(filling_buf[i]);
+//    Serial.print(", ");
+//  }
+//  Serial.println("\n");
 //  memcpy(filling_buf + filling_buf_size, msg, msg_len);
 //  filling_buf_size = filling_buf_size + msg_len;
 //  digitalWrite(TIMING_PIN, 0);
