@@ -5,14 +5,12 @@ import queue
 from comm.rxtx import setup, send_audio
 import time
 import wave
-import samplerate
 
 # Recording parameters
-RECORD_SAMPLE_RATE = 44100
-SEND_SAMPLE_RATE = 16000
+SAMPLE_RATE = 16000
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
-CHUNK_SIZE = 160  # Number of frames per buffer for streaming
+CHUNK_SIZE = 1024  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
 class AudioTransmitter:
@@ -22,18 +20,13 @@ class AudioTransmitter:
         self.stream = None  # Initialize stream as None
         self.mode = "transmit"
         self.file = "/home/pi/wakey-talkie/audio/hitsdifferent8.wav"
-        print(sd.query_devices(2))
 
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
         if status:
             print(status)  # Handle any errors
 
-        print(f"Raw indata {indata}")
-        converter = samplerate.Resampler('sinc_fastest')
-        audio_bytes = converter.process(indata, SEND_SAMPLE_RATE/RECORD_SAMPLE_RATE)
-        audio_bytes = audio_bytes * 32
-        audio_bytes = ((audio_bytes+1)*255/2).astype(np.uint8).tobytes()
+        audio_bytes = ((indata+1) * 255/2).astype(np.uint8).tobytes()
         if self.mode == "transmit":
             for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
                 packet = audio_bytes[i:i + MAX_PACKET_SIZE]
@@ -94,39 +87,13 @@ class AudioTransmitter:
 
             # Start the stream with the callback
             self.stream = sd.InputStream(
-                samplerate=RECORD_SAMPLE_RATE, 
-                channels=CHANNELS,
-                device=2,
+                samplerate=SAMPLE_RATE, 
+                channels=CHANNELS, 
                 callback=self.audio_callback
             )
             self.stream.start()                
         except Exception as e:
             print(f"Error starting recording: {e}")
-
-    def stop_recording(self):
-        if self.stream:
-            try:
-                self.stream.stop()
-                self.stream.close()
-                print("Recording stopped.")
-                # Process the recorded chunks from the queue
-                # self.save_audio_from_queue()
-            except Exception as e:
-                print(f"Error stopping recording: {e}")
-
-    def save_audio_from_queue(self):
-        # Collect all chunks from the queue
-        audio_data = []
-        while not self.audio_queue.empty():
-            audio_data.append(self.audio_queue.get())
-
-        if audio_data:
-            # Convert to a single numpy array and save as WAV file
-            audio_data = np.concatenate(audio_data, axis=0)
-            write("real_time_recording.wav", SAMPLE_RATE, audio_data)
-            print("Recording saved as real_time_recording.wav")
-        else:
-            print("No audio data to save.")
 
 # Example usage:
 if __name__ == "__main__":
@@ -148,3 +115,4 @@ if __name__ == "__main__":
     #     sd.sleep(DURATION * 1000)  # Sleep for recording duration (ms)
     # finally:
     #     transmitter.stop_recording()
+

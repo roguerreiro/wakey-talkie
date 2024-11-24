@@ -1,7 +1,7 @@
 from pyrf24 import RF24, RF24_PA_LOW
 import RPi.GPIO as GPIO
 import time
-from files import read_data, save_data
+from comm.files import read_data, save_data
 
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
 FILE_PATH = "~/wakey-talkie/pi/data.json"
@@ -47,6 +47,7 @@ def receive_message():
 def send_audio(sample):
     radio.setAutoAck(False)
     radio.openWritingPipe(PERIPHERAL_ADDRESS)
+    print(sample)
     radio.write(sample)
 
 def set_alarm(id, time):
