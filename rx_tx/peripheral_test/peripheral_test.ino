@@ -73,13 +73,13 @@ void setup() {
   Serial.println("Timer started");
 }
 
-void receive_message(){
-   if (radio.available()) {
-    uint8_t receivedMessage[RECEIVE_BUFFER_SIZE] = "";
-    radio.read(&receivedMessage, sizeof(receivedMessage));
-    fillBuffer(receivedMessage, RECEIVE_BUFFER_SIZE);
-  }
-}
+//void receive_message(){
+//   if (radio.available()) {
+//    uint8_t receivedMessage[RECEIVE_BUFFER_SIZE] = "";
+//    radio.read(&receivedMessage, sizeof(receivedMessage));
+//    fillBuffer(receivedMessage, RECEIVE_BUFFER_SIZE);
+//  }
+//}
 
 bool receive_audio(uint8_t* buffie) {
   if (radio.available()) {
@@ -118,6 +118,7 @@ void loop()
     // call function that receives a packet and returns the pointer and the length
     if(receive_audio(receiving_buf))
     {
+      receive_audio(receiving_buf);
       fillBuffer(receiving_buf, RECEIVE_BUFFER_SIZE);
     }
     else
@@ -132,6 +133,13 @@ void fillBuffer(uint8_t *msg, uint8_t msg_len)
 //  digitalWrite(TIMING_PIN, 1);
   memcpy(filling_buf, msg, msg_len);
   filling_buf_size = msg_len;
+  Serial.print("Buffer: ");
+  for(int i=0; i<32; i++)
+  {
+    Serial.print(filling_buf[i]);
+    Serial.print(", ");
+  }
+  Serial.println("\n");
 //  memcpy(filling_buf + filling_buf_size, msg, msg_len);
 //  filling_buf_size = filling_buf_size + msg_len;
 //  digitalWrite(TIMING_PIN, 0);
@@ -139,10 +147,17 @@ void fillBuffer(uint8_t *msg, uint8_t msg_len)
 
 void IRAM_ATTR switchBuffers()
 {
-  playing_buf_size = filling_buf_size;
-  filling_buf_size = 0;
-  uint8_t *tmp = filling_buf;
-  filling_buf = playing_buf;
-  playing_buf = tmp;
-  playing_idx = 0;
+  if(filling_buf_size == 0)
+  {
+    playing_idx = playing_idx - 1;
+  }
+  else
+  {
+    playing_buf_size = filling_buf_size;
+    filling_buf_size = 0;
+    uint8_t *tmp = filling_buf;
+    filling_buf = playing_buf;
+    playing_buf = tmp;
+    playing_idx = 0;
+  }
 }
