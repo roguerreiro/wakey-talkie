@@ -5,14 +5,14 @@ import queue
 from comm.rxtx import setup, send_audio
 import time
 import wave
-import samplerate
 
 # Recording parameters
 RECORD_SAMPLE_RATE = 48000
 SEND_SAMPLE_RATE = 16000
+SCALING_FACTOR = RECORD_SAMPLE_RATE / SEND_SAMPLE_RATE
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
-CHUNK_SIZE = 1600  # Number of frames per buffer for streaming
+CHUNK_SIZE = 4800  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
 class AudioTransmitter:
@@ -29,13 +29,12 @@ class AudioTransmitter:
         if status:
             print(status)  # Handle any errors
 
-        converter = samplerate.Resampler('sinc_fastest')
-        audio_bytes = converter.process(indata, SEND_SAMPLE_RATE/RECORD_SAMPLE_RATE)
+        
         audio_bytes = audio_bytes * 32
         audio_bytes = ((audio_bytes+1)*255/2).astype(np.uint8).tobytes()
         if self.mode == "transmit":
-            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
-                packet = audio_bytes[i:i + MAX_PACKET_SIZE]
+            for i in range(0, len(audio_bytes), MAX_PACKET_SIZE * SCALING_FACTOR):
+                packet = audio_bytes[i:i + MAX_PACKET_SIZE * SCALING_FACTOR:SCALING_FACTOR]
                 send_audio(packet)
         elif self.mode == "save":
             self.audio_queue.put(indata.copy())
