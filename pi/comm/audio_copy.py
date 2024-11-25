@@ -12,7 +12,7 @@ SEND_SAMPLE_RATE = 16000
 SCALING_FACTOR = 3
 CHANNELS = 1
 DURATION = 5  # Total duration for recording in seconds
-CHUNK_SIZE = 4800  # Number of frames per buffer for streaming
+CHUNK_SIZE = 96  # Number of frames per buffer for streaming
 MAX_PACKET_SIZE = 32
 
 class AudioTransmitter:
@@ -29,8 +29,7 @@ class AudioTransmitter:
         if status:
             print(status)  # Handle any errors
 
-        downsampled = indata[0:len(indata):SCALING_FACTOR] # take every 3 samples
-        downsampled = downsampled * 32
+        downsampled = indata[::SCALING_FACTOR] *32 # take every 3 samples
         audio_bytes = ((downsampled+1)*255/2).astype(np.uint8).tobytes()
         if self.mode == "transmit":
             for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
@@ -38,7 +37,6 @@ class AudioTransmitter:
                 send_audio(packet)
         elif self.mode == "save":
             self.audio_queue.put(indata.copy())
-
 
     def read_and_send_audio(self):
         """
