@@ -50,7 +50,6 @@ class AudioTransmitter:
                 indata = self.audio_queue.get(block=True, timeout=1)
                 
                 # Process the data
-                start = time.time()
                 downsampled = indata[::SCALING_FACTOR] * 32
                 # audio_bytes = ((downsampled + 1) * 255 / 2).astype(np.uint8).tobytes()
                 audio_bytes = np.clip(((downsampled+1) * 127.5), 0, 255).astype(np.uint8).tobytes()
@@ -62,7 +61,6 @@ class AudioTransmitter:
                 send_audio(audio_bytes)
                 # if self.mode == "save":
                 #     print("Saving audio...")  # Replace with save logic if needed
-                print(time.time()-start)
             except queue.Empty:
                 continue
 
