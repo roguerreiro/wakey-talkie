@@ -6,6 +6,9 @@ import threading
 from comm.rxtx import setup, send_audio
 import time
 import wave
+import os
+
+os.nice(-10)
 
 # Recording parameters
 RECORD_SAMPLE_RATE = 48000
@@ -20,7 +23,7 @@ MAX_PACKET_SIZE = 32
 class AudioTransmitter:
     def __init__(self, id_list):
         self.ids = id_list
-        self.audio_queue = queue.Queue(maxsize=10)
+        self.audio_queue = queue.Queue(maxsize=50)
         self.stream = None  # Initialize stream as None
         self.mode = "transmit"
         self.running = True
@@ -31,11 +34,11 @@ class AudioTransmitter:
     # Callback function to process audio in real-time
     def audio_callback(self, indata, frames, time, status):
         if status:
-            print(status)  # Handle any errors
+           print(status)  # Handle any errors
 
         # Place audio data into the queue for processing
         try:
-            self.audio_queue.put(indata.copy(), block=False)
+            self.audio_queue.put_nowait(indata)
         except queue.Full:
             print("Queue full! Dropping audio frame.")
 
@@ -47,16 +50,19 @@ class AudioTransmitter:
                 indata = self.audio_queue.get(block=True, timeout=1)
                 
                 # Process the data
+                start = time.time()
                 downsampled = indata[::SCALING_FACTOR] * 32
-                audio_bytes = ((downsampled + 1) * 255 / 2).astype(np.uint8).tobytes()
-
+                # audio_bytes = ((downsampled + 1) * 255 / 2).astype(np.uint8).tobytes()
+                audio_bytes = np.clip(((downsampled+1) * 127.5), 0, 255).astype(np.uint8).tobytes()
                 # Transmit or save based on the mode
-                if self.mode == "transmit":
-                    for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
-                        packet = audio_bytes[i:i + MAX_PACKET_SIZE]
-                        send_audio(packet)
-                elif self.mode == "save":
-                    print("Saving audio...")  # Replace with save logic if needed
+                # if self.mode == "transmit":
+                #     for i in range(0, len(audio_bytes), MAX_PACKET_SIZE):
+                #         packet = audio_bytes[i:i + MAX_PACKET_SIZE]
+                #         send_audio(packet)
+                send_audio(audio_bytes)
+                # if self.mode == "save":
+                #     print("Saving audio...")  # Replace with save logic if needed
+                print(time.time()-start)
             except queue.Empty:
                 continue
 
