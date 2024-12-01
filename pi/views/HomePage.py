@@ -6,25 +6,34 @@ class HomePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="black")
 
-        # Create canvas for circular buttons
-        self.canvas = tk.Canvas(self, bg="black", highlightthickness=0)
-        self.canvas.pack(fill="both", expand=True)
+        # Wrapper frame for better layout control
+        wrapper_frame = tk.Frame(self, bg="black")
+        wrapper_frame.grid(row=0, column=0, sticky="nsew")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
 
-        # Time display
-        self.time_label = tk.Label(self, font=("Helvetica", 150), fg="white", bg="black")
-        self.time_label.pack(expand=True, pady=(50,0))
+        # Time display in the middle of the screen
+        self.time_label = tk.Label(wrapper_frame, font=("Helvetica", 150), fg="white", bg="black")
+        self.time_label.grid(row=1, column=0, pady=(20, 0), sticky="n")
         self.update_time()
+
+        # Create canvas for circular buttons at the top
+        self.canvas = tk.Canvas(wrapper_frame, bg="black", highlightthickness=0)
+        self.canvas.grid(row=0, column=0, sticky="nsew")
+        wrapper_frame.grid_rowconfigure(0, weight=1)
+        wrapper_frame.grid_rowconfigure(1, weight=4)  # Time label should take more vertical space
+        wrapper_frame.grid_columnconfigure(0, weight=1)
 
         # Wait for the window to be fully rendered before drawing buttons
         self.after(100, lambda: self.create_buttons(controller))
 
     def create_buttons(self, controller):
-        # Calculate button positions based on window size
         self.update()  # Ensure accurate size measurements
         width = self.canvas.winfo_width()
 
-        self.create_circle_button(100, 100, 50, "Set Alarms", "AlarmPage", controller)
-        self.create_circle_button(width - 100, 100, 50, "Intercom", "IntercomPage", controller)
+        # Place buttons near the top corners
+        self.create_circle_button(100, 50, 50, "Set Alarms", "AlarmPage", controller)
+        self.create_circle_button(width - 100, 50, 50, "Intercom", "IntercomPage", controller)
 
     def create_circle_button(self, x, y, r, text, target_page, controller):
         color = f"#{random.randint(0, 255):02x}{random.randint(0, 255):02x}{random.randint(0, 255):02x}"
@@ -41,3 +50,4 @@ class HomePage(tk.Frame):
         current_time = time.strftime("%H:%M")
         self.time_label.config(text=current_time)
         self.after(1000, self.update_time)
+
