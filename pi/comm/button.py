@@ -14,7 +14,7 @@ def button_pressed_callback(channel):
 def button_released_callback(channel):
     print("Button released!")
 
-class Button(object):
+class Button:
     def __init__(self, pin, rising_callback, falling_callback, bounce=100):
         self.pin = pin
         self.rising = rising_callback
@@ -24,18 +24,13 @@ class Button(object):
         GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
         GPIO.add_event_detect(self.pin, GPIO.BOTH, self.handle_press, bouncetime=bounce)
 
-    def handle_press(self):
-        if (GPIO.input(self.pin)):
-            self.rising()
+    def handle_press(self, channel):
+        if GPIO.input(self.pin):
+            self.rising(channel)
         else:
-            self.falling()
+            self.falling(channel)
 
-# def io_setup():
-if __name__ == '__main__':   
-    button = Button(BUTTON_GPIO, button_pressed_callback, button_released_callback)
-
-    while(1):
-        pass
-
+if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
+    button = Button(BUTTON_GPIO, button_pressed_callback, button_released_callback)
     signal.pause()
