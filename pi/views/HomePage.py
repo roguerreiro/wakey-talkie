@@ -6,14 +6,14 @@ class HomePage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="black")
 
-        # Time display
-        self.time_label = tk.Label(self, font=("Helvetica", 150), fg="white", bg="black")
-        self.time_label.pack(expand=True, fill="both")
-        self.update_time()
-
         # Create canvas for circular buttons
         self.canvas = tk.Canvas(self, bg="black", highlightthickness=0)
         self.canvas.pack(fill="both", expand=True)
+
+        # Time display
+        self.time_label = tk.Label(self, font=("Helvetica", 150), fg="white", bg="black")
+        self.time_label.pack(expand=True, pady=(50,0))
+        self.update_time()
 
         # Wait for the window to be fully rendered before drawing buttons
         self.after(100, lambda: self.create_buttons(controller))
