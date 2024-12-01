@@ -12,7 +12,7 @@ class HomePage(tk.Frame):
 
         # Time display
         self.time_label = tk.Label(self, font=("Helvetica", 150), fg="white", bg="black")
-        self.time_label.pack(expand=True, pady=(50,0))
+        self.time_label.pack(expand=True, pady=(0, 50))
         self.update_time()
 
         # Wait for the window to be fully rendered before drawing buttons
