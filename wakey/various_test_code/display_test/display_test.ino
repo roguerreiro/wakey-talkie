@@ -2,13 +2,12 @@
 
 #ifdef ESP32
 
-#define P_LAT 22
-#define P_A 19
-#define P_B 23
-#define P_C 18
-#define P_D 5
-#define P_E 15
-#define P_OE 2
+#define P_LAT 12
+#define P_A 32
+#define P_B 33
+#define P_C 26
+#define P_D 27
+#define P_OE 22
 hw_timer_t * timer = NULL;
 portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
@@ -18,13 +17,9 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 
 #include <Ticker.h>
 Ticker display_ticker;
-#define P_LAT 16
-#define P_A 5
-#define P_B 4
-#define P_C 15
-#define P_D 12
-#define P_E 0
-#define P_OE 2
+
+
+
 
 #endif
 // Pins for LED MATRIX
