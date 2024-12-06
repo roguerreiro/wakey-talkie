@@ -9,7 +9,7 @@ CHANNELS = 1
 DURATION = 5  # Recording duration in seconds
 
 class AudioRecorder:
-    def __init__(self, filename="output.wav"):
+    def __init__(self, filename="real_time_recording.wav"):
         self.filename = filename
 
     def record_and_save_audio(self):

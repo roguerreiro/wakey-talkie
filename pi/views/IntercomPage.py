@@ -3,7 +3,7 @@ from tkinter import ttk
 import threading
 import RPi.GPIO as GPIO
 from comm.audio import AudioRecorder
-# from comm.rxtx import send_audio_file  # Assuming a function to send the file
+from comm.rxtx import send_audio_file  # Assuming a function to send the file
 
 # GPIO setup
 BUTTON_PIN = 27  # GPIO pin connected to the button
@@ -71,7 +71,7 @@ class IntercomPage(tk.Frame):
             self.status_label.config(text="Recording Complete. Sending...")
 
             # Transmit the saved audio file
-            # send_audio_file("real_time_recording.wav")
+            send_audio_file("real_time_recording.wav")
             self.status_label.config(text="Transmission Complete.")
         except Exception as e:
             self.status_label.config(text=f"Error: {e}")
