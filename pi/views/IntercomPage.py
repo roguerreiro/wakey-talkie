@@ -2,7 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 import threading
 import RPi.GPIO as GPIO
-from comm.audio_copy import AudioTransmitter  # Ensure the path is correct
+from comm.audio import AudioRecorder
+# from comm.rxtx import send_audio_file  # Assuming a function to send the file
 
 # GPIO setup
 BUTTON_PIN = 27  # GPIO pin connected to the button
@@ -35,8 +36,7 @@ class IntercomPage(tk.Frame):
         self.status_label.pack(expand=True)
 
         # Instance variables
-        self.is_recording = False
-        self.audio_transmitter = AudioTransmitter([1])
+        self.audio_recorder = AudioRecorder("real_time_recording.wav")
         self.recording_thread = None
 
         # Setup GPIO
@@ -55,36 +55,32 @@ class IntercomPage(tk.Frame):
 
     def start_recording(self):
         """Start recording when the button is pressed."""
-        if self.is_recording:
+        if self.recording_thread and self.recording_thread.is_alive():
             return  # Prevent multiple recordings at once
 
-        self.is_recording = True
         self.status_label.config(text="Recording...")
         
-        # Start recording in a separate thread
-        self.recording_thread = threading.Thread(target=self.record_audio)
+        # Start recording and transmission in a separate thread
+        self.recording_thread = threading.Thread(target=self.record_and_transmit)
         self.recording_thread.start()
 
-    def record_audio(self):
-        """Start audio recording."""
+    def record_and_transmit(self):
+        """Record audio and transmit after recording finishes."""
         try:
-            self.audio_transmitter.start_recording()
-            while self.is_recording:
-                pass  # Keep recording active while the flag is True
-            self.audio_transmitter.stop_recording()
+            self.audio_recorder.record_and_save_audio()  # Record and save audio
+            self.status_label.config(text="Recording Complete. Sending...")
+
+            # Transmit the saved audio file
+            # send_audio_file("real_time_recording.wav")
+            self.status_label.config(text="Transmission Complete.")
         except Exception as e:
             self.status_label.config(text=f"Error: {e}")
         finally:
-            if not self.is_recording:
-                self.status_label.config(text="Recording Stopped")
+            self.status_label.config(text="Idle")
 
     def stop_recording(self):
         """Stop recording when the button is released."""
-        if not self.is_recording:
-            return  # Ignore if already stopped
-
-        self.is_recording = False
-        self.status_label.config(text="Recording Stopped")
+        # No action needed here, as the recording automatically stops after the set duration
 
     def cleanup(self):
         """Clean up GPIO and other resources."""

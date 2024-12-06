@@ -16,7 +16,7 @@ class AudioTransmitter:
     def __init__(self, id_list):
         self.ids = id_list
         self.stream = None
-        self.mode = "transmit"
+        self.mode = "save"
         self.audio_queue = queue.Queue(maxsize=50)  # Queue for buffered audio
         self.ring_buffer = RingBuffer(size=RING_BUFFER_SIZE)  # Real-time backup
         self.running = False
@@ -55,21 +55,24 @@ class AudioTransmitter:
     def start_recording(self, type="transmit"):
         self.mode = type
         self.running = True
-        self.thread = threading.Thread(target=self.processing_thread, daemon=True)
-        self.thread.start()
+        if type == "transmit":
+            self.thread = threading.Thread(target=self.processing_thread, daemon=True)
+            self.thread.start()
 
-        try:
-            self.stream = sd.InputStream(
-                samplerate=RECORD_SAMPLE_RATE,
-                channels=1,
-                device=2,
-                blocksize=CHUNK_SIZE,
-                callback=self.audio_callback
-            )
-            self.stream.start()
-        except Exception as e:
-            print(f"Error starting recording: {e}")
-            self.running = False
+            try:
+                self.stream = sd.InputStream(
+                    samplerate=RECORD_SAMPLE_RATE,
+                    channels=1,
+                    device=2,
+                    blocksize=CHUNK_SIZE,
+                    callback=self.audio_callback
+                )
+                self.stream.start()
+            except Exception as e:
+                print(f"Error starting recording: {e}")
+                self.running = False
+        elif type == "save":
+            pass
 
     def stop_recording(self):
         self.running = False
