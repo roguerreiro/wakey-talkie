@@ -2,7 +2,7 @@ import signal
 import sys
 import RPi.GPIO as GPIO
 
-BUTTON_GPIO = 16
+BUTTON_GPIO = 27
 
 def signal_handler(sig, frame):
     GPIO.cleanup()
@@ -21,7 +21,7 @@ class Button:
         self.falling = falling_callback
 
         GPIO.setmode(GPIO.BCM)
-        GPIO.setup(self.pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+        GPIO.setup(self.pin, GPIO.IN)
         GPIO.add_event_detect(self.pin, GPIO.BOTH, self.handle_press, bouncetime=bounce)
 
     def handle_press(self, channel):
@@ -32,5 +32,5 @@ class Button:
 
 if __name__ == '__main__':
     signal.signal(signal.SIGINT, signal_handler)
-    button = Button(BUTTON_GPIO, button_pressed_callback, button_released_callback)
+    button = Button(BUTTON_GPIO, button_pressed_callback, button_released_callback, bounce=200)
     signal.pause()
