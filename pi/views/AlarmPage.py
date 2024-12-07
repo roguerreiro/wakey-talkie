@@ -62,5 +62,4 @@ class AlarmPage(tk.Frame):
         # Create a bytes object
         buffer = bytes([high_byte, low_byte])
 
-        # message = f"{hour}:{minute}{am_pm}"
         set_alarm(1, buffer)

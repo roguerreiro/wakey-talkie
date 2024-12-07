@@ -108,7 +108,7 @@ def send_audio_file(ids, filename, chunk_size=32):
         print(f"Error sending audio file: {e}")
 
 def set_alarm(id, time):
-    send_message([id], time, encode=False)
+    send_message([id], Opcode.SET_ALARM, time, tries=5)
 
 def get_available_peripherals():
     data = read_data(FILE_PATH)
