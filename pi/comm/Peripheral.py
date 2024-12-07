@@ -1,8 +1,9 @@
 import json
 from comm.files import read_data, save_data
 from comm.rxtx import send_message, Opcode
+import os
 
-FILE_PATH = "~/wakey-talkie/pi/data.json"
+FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
 
 class Peripheral(object):
     def __init__(self, id):
@@ -24,15 +25,17 @@ class Peripheral(object):
         # Create a bytes object
         buffer = bytes([high_byte, low_byte])
 
-        send_message(self.address, Opcode.SET_ALARM, buffer, tries=5)
+        send_message(self.address, Opcode.SET_ALARM.value, buffer, tries=5)
 
     @staticmethod
     def get_available_devices():
+        print(os.path.abspath(__file__))
         data = read_data(FILE_PATH)
+        print(data)
         available ={}
         i = 0
         for peripheral in data["peripherals"]:
-            success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK, "", tries=3)
+            success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK.value, "", tries=3)
             if success:
                 available[i] = Peripheral(i)
             i += 1
