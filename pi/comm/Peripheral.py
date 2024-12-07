@@ -39,3 +39,4 @@ class Peripheral(object):
             if success:
                 available[i] = Peripheral(i)
             i += 1
+        return data
