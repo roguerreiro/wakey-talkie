@@ -1,6 +1,7 @@
 {
     "peripherals": [
-        {"id": 1, "name": "Room 1", "alarm": "7:30AM"}
-    ],
-    "messages": []
+        {"address": 1034834473185, "alarm":"12:00AM", "expiration":""},
+        {"address": 1034834473137, "alarm":"12:00AM", "expiration":""},
+        {"address": 1034834473155, "alarm":"12:00AM", "expiration":""}
+    ]
 }

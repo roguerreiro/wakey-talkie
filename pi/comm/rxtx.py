@@ -32,30 +32,22 @@ def setup():
     radio.setChannel(75)           # Ensure the same channel on both devices
     print(radio.isChipConnected())
 
-def send_message(ids, opcode, message, tries=1):
-    if len(message) > 30:
-        print("Message too long. Must be 30 bytes or fewer.")
+def send_message(address, opcode, message, tries=1):
+    if len(message) > 31:
+        print("Message too long. Must be 31 bytes or fewer.")
         return False
 
-    id_encoded = 0
-    for id in ids:
-        if id > 7:
-            print("Invalid ID:", id)
-            return False
-        id_encoded = id_encoded | (1 << id)
-
     payload = bytearray(32)
-    payload[0] = id_encoded
-    payload[1] = opcode
-    payload[2:2 + len(message)] = message.encode('utf-8')
+    payload[0] = opcode
+    payload[1:1 + len(message)] = message.encode('utf-8')
 
     # Pad the message if it's shorter than 30 bytes
-    if len(message) < 30:
-        payload[2 + len(message):] = b'\x00' * (30 - len(message))
+    if len(message) < 31:
+        payload[1 + len(message):] = b'\x00' * (31 - len(message))
 
     # Send the payload
     radio.stopListening()
-    radio.openWritingPipe(PERIPHERAL_ADDRESS)
+    radio.openWritingPipe(address)
     success = False
     for _ in range(tries):
         success = radio.write(payload)
