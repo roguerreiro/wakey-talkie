@@ -29,9 +29,7 @@ class Peripheral(object):
 
     @staticmethod
     def get_available_devices():
-        print(os.path.abspath(__file__))
         data = read_data(FILE_PATH)
-        print(data)
         available ={}
         i = 0
         for peripheral in data["peripherals"]:
@@ -39,4 +37,4 @@ class Peripheral(object):
             if success:
                 available[i] = Peripheral(i)
             i += 1
-        return data
+        return available

@@ -9,6 +9,7 @@ class AlarmPage(tk.Frame):
         tk.Frame.__init__(self, parent, bg="white")
 
         self.peripherals = Peripheral.get_available_devices()
+        print(self.peripherals)
 
         pane = tk.PanedWindow(self, orient=tk.VERTICAL)
         pane.pack(fill="both", expand=True)
@@ -35,10 +36,12 @@ class AlarmPage(tk.Frame):
             no_devices_label.pack(expand=True, pady=20)
         else:
             # Create alarm frames for each peripheral
-            for i, (id, peripheral) in enumerate(self.peripherals):
+            i = 0
+            for id, peripheral in self.peripherals.items():
                 frame = self.create_alarm_frame(main_frame, id)
                 frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")
                 self.alarm_frames[id] = frame
+                i += 1
 
 
     def create_alarm_frame(self, parent, peripheral_id):
