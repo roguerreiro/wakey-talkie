@@ -1,13 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
-from comm.rxtx import set_alarm, get_available_devices
+from comm.rxtx import set_alarm
+from comm.Peripheral import Peripheral
 
 
 class AlarmPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
 
-        self.peripherals = get_available_devices()
+        self.peripherals = Peripheral.get_available_devices()
 
         pane = tk.PanedWindow(self, orient=tk.VERTICAL)
         pane.pack(fill="both", expand=True)

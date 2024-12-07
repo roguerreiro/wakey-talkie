@@ -25,3 +25,14 @@ class Peripheral(object):
         buffer = bytes([high_byte, low_byte])
 
         send_message(self.address, Opcode.SET_ALARM, buffer, tries=5)
+
+    @staticmethod
+    def get_available_devices():
+        data = read_data(FILE_PATH)
+        available ={}
+        i = 0
+        for peripheral in data["peripherals"]:
+            success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK, "", tries=3)
+            if success:
+                available[i] = Peripheral(i)
+            i += 1

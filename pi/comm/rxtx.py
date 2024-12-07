@@ -4,7 +4,6 @@ import time
 from comm.files import read_data, save_data
 import wave
 from enum import Enum
-from comm.Peripheral import Peripheral
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
 FILE_PATH = "~/wakey-talkie/pi/data.json"
 
@@ -31,16 +30,6 @@ def setup():
     radio.setPALevel(RF24_PA_LOW)  # Set power level to low for testing
     radio.setChannel(75)           # Ensure the same channel on both devices
     print(radio.isChipConnected())
-
-def get_available_devices():
-    data = read_data(FILE_PATH)
-    available ={}
-    i = 0
-    for peripheral in data["peripherals"]:
-        success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK, "", tries=3)
-        if success:
-            available[i] = Peripheral(i)
-        i += 1
 
 def send_message(address, opcode, message, tries=1):
     if len(message) > 31:
