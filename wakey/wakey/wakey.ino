@@ -9,6 +9,8 @@
 #include <SPI.h>
 #include <RF24.h>
 
+// hi this is Emma's good fresh code
+
 // Time API Setup
 const char* ssid       = "DukeVisitor";
 const char* password   = "";
