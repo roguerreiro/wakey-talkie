@@ -17,7 +17,7 @@ extern const char *alarmFiles[];
 extern repeatCount;
 
 bool checkAlarmTime();
-void triggerAlarm(const char *fileName, int repeats);
-void playWAV(const char *fileName);
+void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer);
+void playWAV(const char *fileName, hw_timer_t *timer);
 
 #endif // ALARM_H

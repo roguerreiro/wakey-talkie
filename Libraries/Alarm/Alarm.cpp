@@ -25,13 +25,13 @@ bool checkAlarmTime()
   return false;
 }
 
-void triggerAlarm(const char *fileName, int repeats)
+void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer)
 {
   repeatCount = repeats - 1;
-  playWAV(fileName);
+  playWAV(fileName, timer);
 }
 
-void playWAV(const char *fileName)
+void playWAV(const char *fileName, hw_timer_t *timer)
 {
   // Open the WAV file
   alarmFile = SPIFFS.open(fileName, "r"); 
@@ -45,9 +45,9 @@ void playWAV(const char *fileName)
   {
     fillBuffer();
     switchBuffers();
-    sampleTimer = timerBegin(1000000); 
-    timerAttachInterrupt(sampleTimer, &isr_play_sample);
-    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+    timer = timerBegin(1000000); 
+    timerAttachInterrupt(timer, &isr_play_sample);
+    timerAlarm(timer, 62, true, 0); // 1/16000Hz = 62.5us
     Serial.println("WAV file playing");
   }
   

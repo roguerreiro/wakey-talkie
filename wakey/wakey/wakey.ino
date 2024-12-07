@@ -9,9 +9,12 @@
 #include <SPI.h>
 #include <RF24.h>
 
+#include <PlayAudio.h>
 #include <Alarm.h>
 
 // hi this is Emma's good fresh code
+
+File playingFile;
 
 // Time API Setup
 const char* ssid       = "DukeVisitor";
@@ -20,8 +23,8 @@ const char* ntpServer = "pool.ntp.org";
 const long  gmtOffset_sec = -18000; // Eastern Standard Time
 const int   daylightOffset_sec = 3600; // observes daylight savings
 char the_time[10];
-volatile int minute;
 volatile int hour;
+volatile int minute;
 volatile int second;
 bool am;
 
@@ -40,7 +43,7 @@ volatile bool stopFlag = false;
 #define RANDOM_PIN 34
 
 // Speaker
-#define DAC_OUT 25
+
 
 // #define TIMING_PIN 5
 #define STOP_BTN 21
@@ -68,22 +71,20 @@ hw_timer_t *displayTimer = NULL;
 hw_timer_t *clockTimer = NULL;
 hw_timer_t *sampleTimer = NULL;
 
-#define BUFFER_SIZE 1024
 
-char *playing_buf;
-char *filling_buf;
-char *tmp;
-int playing_buf_size = 0;
-int filling_buf_size = 0;
-int playing_idx = 0;
-int sample;
+enum PlayingState : uint8_t
+{
+  NOT_PLAYING = 0,
+  PLAYING_ALARM,
+  PLAYING_MSG
+};
+
+PlayingState playingState = NOT_PLAYING;
 
 void formatTime();
-void fillBuffer();
-void switchBuffers();
 
-void stopAlarm();
-void repeatAlarm();
+
+
 
 uint16_t randomColor()
 {
@@ -103,16 +104,6 @@ void IRAM_ATTR isr_display_updater()
 void IRAM_ATTR isr_second_passed()
 {
   secondFlag = true;
-}
-
-void IRAM_ATTR isr_play_sample()
-{
-  dacWrite(DAC_OUT, playing_buf[playing_idx]);
-  playing_idx++;
-  if(playing_idx == playing_buf_size) 
-  {
-    switchBuffers();
-  }
 }
 
 void setup() 
@@ -188,7 +179,7 @@ void setup()
   Serial.print("After rxSetup(), isChipConnected()? ");
   Serial.println(radio.isChipConnected());
 
-  triggerAlarm("/wakeywakey.wav", 3);
+  triggerAlarm("/wakeywakey.wav", 3, sampleTimer);
 }
 
 void loop() 
@@ -206,19 +197,26 @@ void loop()
     display.clearDisplay();
     formatTime();
     display.print(the_time);
-    if(checkAlarmTime())
+    if(checkAlarmTime(hour, minute, am))
     {
-      triggerAlarm(alarmFiles[alarm_index], 2);
+      playingState = PLAYING_ALARM;
+      triggerAlarm(alarmFiles[alarm_index], 2, sampleTimer);
     }
     secondFlag = false;
   }
   if(filling_buf_size == 0)
   {
-    fillBuffer();
+    switch(playingState)
+    {
+      case PLAYING_ALARM:
+      {
+        fillBuffer(alarmFile, sampleTimer);
+      }
+    }
   }
   if(stopFlag)
   {
-    stopAlarm();
+    stopAlarm(sampleTimer);
     stopFlag = false;
   }
   receive_message();
@@ -263,52 +261,6 @@ void formatTime()
   }
 }
 
-void stopAlarm()
-{
-  timerDetachInterrupt(sampleTimer);
-  audioFile.close();
-  repeatCount = 0;
-  filling_buf_size = -1;
-  Serial.println("Alarm stopped.");
-}
-
-void repeatAlarm()
-{
-  if(repeatCount)
-    {
-      Serial.println("Repeating the alarm.");
-      repeatCount--;
-      audioFile.seek(44);
-    }
-    else
-    {
-      stopAlarm();
-    }
-}
-
-void fillBuffer()
-{
-  Serial.println("fillBuffer");
-  if(audioFile.available())
-  {
-    filling_buf_size = audioFile.readBytes(filling_buf, BUFFER_SIZE);
-    Serial.println(filling_buf_size, DEC);
-  }
-  else
-  {
-    repeatAlarm();
-  }
-}
-
-void IRAM_ATTR switchBuffers()
-{
-  playing_buf_size = filling_buf_size;
-  filling_buf_size = 0;
-  char *tmp = filling_buf;
-  filling_buf = playing_buf;
-  playing_buf = tmp;
-  playing_idx = 0;
-}
 
 void receive_message()
 {
