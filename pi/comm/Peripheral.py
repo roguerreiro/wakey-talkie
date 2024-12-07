@@ -1,5 +1,5 @@
 import json
-from comm.data import read_data, save_data
+from comm.files import read_data, save_data
 from comm.rxtx import send_message, Opcode
 
 FILE_PATH = "~/wakey-talkie/pi/data.json"
