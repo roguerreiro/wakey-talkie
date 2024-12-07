@@ -7,6 +7,7 @@ FILE_PATH = "~/wakey-talkie/pi/data.json"
 class Peripheral(object):
     def __init__(self, id):
         data = read_data(FILE_PATH)
+        self.id = id
         self.address = data["peripherals"][id]["address"]
 
     def set_alarm(self, hour, minute, am_pm):

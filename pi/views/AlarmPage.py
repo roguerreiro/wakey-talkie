@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter import ttk
-from comm.rxtx import set_alarm
+from comm.rxtx import set_alarm, get_available_devices
+
 
 class AlarmPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
-        
+
+        self.peripherals = get_available_devices()
+
         pane = tk.PanedWindow(self, orient=tk.VERTICAL)
         pane.pack(fill="both", expand=True)
         button_frame = tk.Frame(pane, bg="gray", height=80)
@@ -13,53 +16,82 @@ class AlarmPage(tk.Frame):
         pane.add(button_frame)
         pane.add(main_frame)
 
-        back_button = ttk.Button(button_frame, text="Back",
-                            command=lambda: controller.show_frame("HomePage"))
+        back_button = ttk.Button(
+            button_frame, text="Back", command=lambda: controller.show_frame("HomePage")
+        )
         back_button.pack(expand=True, fill="both")
 
-        # Hour spinbox (1-12)
-        self.hour_var = tk.StringVar(value="12")
-        hour_spinbox = tk.Spinbox(main_frame, from_=1, to=12, wrap=True, textvariable=self.hour_var,
-                                  font=("Helvetica", 20), width=2, justify="center", state="readonly")
-        hour_spinbox.grid(row=1, column=0, padx=5)
+        self.alarm_frames = {}
+        if not self.peripherals:
+            # Display message if no peripherals are found
+            no_devices_label = tk.Label(
+                main_frame,
+                text="No available peripherals found.",
+                font=("Helvetica", 16),
+                bg="white",
+                fg="red",
+            )
+            no_devices_label.pack(expand=True, pady=20)
+        else:
+            # Create alarm frames for each peripheral
+            for i, (id, peripheral) in enumerate(self.peripherals):
+                frame = self.create_alarm_frame(main_frame, id)
+                frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")
+                self.alarm_frames[id] = frame
 
-        # Separator for hours and minutes
-        colon_label = tk.Label(main_frame, text=":", font=("Helvetica", 20))
-        colon_label.grid(row=1, column=1)
 
-        self.minute_var = tk.StringVar(value="00")
-        minute_spinbox = tk.Spinbox(main_frame, from_=0, to=59, wrap=True, textvariable=self.minute_var,
-                                    font=("Helvetica", 20), width=2, justify="center", state="readonly",
-                                    format="%02.0f")
-        minute_spinbox.grid(row=1, column=2, padx=5)
+    def create_alarm_frame(self, parent, peripheral_id):
+        """Creates a frame for configuring the alarm for a specific peripheral."""
+        frame = tk.Frame(parent, bg="white", relief="groove", bd=2)
 
-        self.am_pm_var = tk.StringVar(value="AM")
-        am_pm_menu = ttk.OptionMenu(main_frame, self.am_pm_var, "AM", "AM", "PM")
+        tk.Label(frame, text=f"Peripheral {peripheral_id}", font=("Helvetica", 16), bg="white").pack()
+
+        # Alarm Type Dropdown
+        alarm_type_var = tk.StringVar(value="Type 1")
+        alarm_type_menu = ttk.OptionMenu(frame, alarm_type_var, "Type 1", "Type 1", "Type 2", "Type 3")
+        alarm_type_menu.pack(pady=5)
+
+        # Hour and Minute Spinboxes
+        hour_var = tk.StringVar(value="12")
+        hour_spinbox = tk.Spinbox(
+            frame, from_=1, to=12, wrap=True, textvariable=hour_var, font=("Helvetica", 16), width=2, justify="center", state="readonly"
+        )
+        hour_spinbox.pack(side="left", padx=5)
+
+        colon_label = tk.Label(frame, text=":", font=("Helvetica", 16), bg="white")
+        colon_label.pack(side="left")
+
+        minute_var = tk.StringVar(value="00")
+        minute_spinbox = tk.Spinbox(
+            frame, from_=0, to=59, wrap=True, textvariable=minute_var, font=("Helvetica", 16), width=2, justify="center", state="readonly"
+        )
+        minute_spinbox.pack(side="left", padx=5)
+
+        am_pm_var = tk.StringVar(value="AM")
+        am_pm_menu = ttk.OptionMenu(frame, am_pm_var, "AM", "AM", "PM")
         am_pm_menu.config(width=2)
-        am_pm_menu.grid(row=1, column=3, padx=5)
+        am_pm_menu.pack(side="left", padx=5)
 
-        # Button to submit the time
-        submit_button = tk.Button(main_frame, text="Submit Time", font=("Helvetica", 16), command=self.submit_time)
-        submit_button.grid(row=2, column=0, columnspan=4, pady=20)
+        # Submit Button
+        submit_button = tk.Button(
+            frame,
+            text="Set Alarm",
+            font=("Helvetica", 12),
+            command=lambda: self.submit_time(peripheral_id, hour_var, minute_var, am_pm_var, alarm_type_var),
+        )
+        submit_button.pack(pady=10)
 
-    def submit_time(self):
-        # Retrieve input values
-        hour = self.hour_var.get()
-        minute = self.minute_var.get()
-        am_pm = self.am_pm_var.get()
-        print(f"Time Set: {hour}:{minute} {am_pm}")
+        # Store references to variables for later use
+        frame.vars = {"hour": hour_var, "minute": minute_var, "am_pm": am_pm_var, "type": alarm_type_var}
+        return frame
 
-        hour_bits = int(hour) & 0b1111
-        minute_bits = int(minute) & 0b00111111
-        am = am_pm == "AM"
-        message = (hour_bits << 12) | (minute_bits << 4) | (am << 3)
-        print("{:16b}".format(message))
+    def submit_time(self, peripheral_id, hour_var, minute_var, am_pm_var, alarm_type_var):
+        """Handles submission of alarm settings for a specific peripheral."""
+        hour = hour_var.get()
+        minute = minute_var.get()
+        am_pm = am_pm_var.get()
+        alarm_type = alarm_type_var.get()
 
-        # Split the 16-bit message into two bytes
-        high_byte = (message >> 8) & 0xFF  # Extract the most significant 8 bits
-        low_byte = message & 0xFF          # Extract the least significant 8 bits
+        print(f"Peripheral {peripheral_id} - Time Set: {hour}:{minute} {am_pm}, Type: {alarm_type}")
 
-        # Create a bytes object
-        buffer = bytes([high_byte, low_byte])
-
-        set_alarm(1, buffer)
+        self.peripherals[peripheral_id].set_alarm(hour, minute, am_pm)
