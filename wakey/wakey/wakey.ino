@@ -9,6 +9,8 @@
 #include <SPI.h>
 #include <RF24.h>
 
+#include <Alarm.h>
+
 // hi this is Emma's good fresh code
 
 // Time API Setup
@@ -21,6 +23,7 @@ char the_time[10];
 volatile int minute;
 volatile int hour;
 volatile int second;
+bool am;
 
 // ISR Flags
 volatile bool displayFlag = false;
@@ -67,7 +70,6 @@ hw_timer_t *sampleTimer = NULL;
 
 #define BUFFER_SIZE 1024
 
-File audioFile; 
 char *playing_buf;
 char *filling_buf;
 char *tmp;
@@ -75,36 +77,13 @@ int playing_buf_size = 0;
 int filling_buf_size = 0;
 int playing_idx = 0;
 int sample;
-int repeatCount;
 
-// alarm time format: hhhh mmmm mmmm a000
-// e.g. 7:15am        0111 0000 1111 1000
-uint16_t alarm_time = 0xA148; // 10:20am
-#define ALARM_MINUTE(alarm_time) (uint8_t)((alarm_time >> 4) & 0xFF)
-#define ALARM_HOUR(alarm_time) (uint8_t)((alarm_time >> 12) & 0xF)
-#define ALARM_ALARM_AM(alarm_time) (uint8_t)((alarm_time >> 3) & 1);
-
-bool checkAlarmTime();
 void formatTime();
-void playWAV(String fileName);
 void fillBuffer();
 void switchBuffers();
-void triggerAlarm(String fileName, int repeats);
+
 void stopAlarm();
 void repeatAlarm();
-
-bool checkAlarmTime()
-{
-  if(ALARM_MINUTE(alarm_time) == minute)
-  {
-    if(ALARM_HOUR(alarm_time) == hour)
-    {
-      // todo: add am/pm
-      return true;
-    }
-  }
-  return false;
-}
 
 uint16_t randomColor()
 {
@@ -227,6 +206,10 @@ void loop()
     display.clearDisplay();
     formatTime();
     display.print(the_time);
+    if(checkAlarmTime())
+    {
+      triggerAlarm(alarmFiles[alarm_index], 2);
+    }
     secondFlag = false;
   }
   if(filling_buf_size == 0)
@@ -238,8 +221,6 @@ void loop()
     stopAlarm();
     stopFlag = false;
   }
-//  Serial.print("isChipConnected()? ");
-//  Serial.println(radio.isChipConnected());
   receive_message();
 }
 
@@ -280,36 +261,6 @@ void formatTime()
   {
     display.setCursor(5 , 10);
   }
-}
-
-void triggerAlarm(String fileName, int repeats)
-{
-  Serial.println("Alarm was triggered!");
-  repeatCount = repeats - 1;
-  playWAV(fileName);
-}
-
-void playWAV(String fileName)
-{
-  // Open the WAV file
-  audioFile = SPIFFS.open(fileName, "r"); 
-  if (!audioFile) {
-    Serial.println("Failed to open file");
-    delay(3000);
-    return;
-  }
-
-  if(audioFile.available())
-  {
-    fillBuffer();
-    switchBuffers();
-    sampleTimer = timerBegin(1000000); 
-    timerAttachInterrupt(sampleTimer, &isr_play_sample);
-    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
-    Serial.println("WAV file playing");
-  }
-  
-  audioFile.seek(44); // skip WAV header
 }
 
 void stopAlarm()
@@ -373,15 +324,6 @@ void receive_message()
     radio.startListening();
     Serial.println(radio.isChipConnected());
    }
-//   else
-//   {
-//    Serial.println("radio.available() returned false.");
-//   }
-
-    //SPI.endTransaction();  // End SPI transaction
-    // Ensure the module remains in listening mode
-    radio.startListening();
-   
 }
 
 void send_message(){
