@@ -8,26 +8,57 @@ class AlarmPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
 
+        self.parent = parent
+        self.controller = controller
+
+        self.peripherals = {}
+        self.alarm_frames = {}
+        self.main_frame = None
+
+        self.init_ui()
+
+    def init_ui(self):
+        """Initializes the UI components."""
+        pane = tk.PanedWindow(self, orient=tk.VERTICAL)
+        pane.pack(fill="both", expand=True)
+
+        # Top frame with buttons
+        button_frame = tk.Frame(pane, bg="gray", height=80)
+        pane.add(button_frame)
+
+        # Main frame for peripherals
+        self.main_frame = tk.Frame(pane, bg="white", height=400)
+        pane.add(self.main_frame)
+
+        # Back Button
+        back_button = ttk.Button(
+            button_frame, text="Back", command=lambda: self.controller.show_frame("HomePage")
+        )
+        back_button.pack(side="left", padx=5, pady=5)
+
+        # Refresh Button
+        refresh_button = ttk.Button(button_frame, text="Refresh", command=self.refresh_peripherals)
+        refresh_button.pack(side="right", padx=5, pady=5)
+
+        # Load peripherals initially
+        self.refresh_peripherals()
+
+    def refresh_peripherals(self):
+        """Refreshes the list of peripherals and updates the UI."""
+        # Clear existing frames
+        for frame in self.alarm_frames.values():
+            frame.destroy()
+        self.alarm_frames.clear()
+
+        # Fetch updated peripherals
         self.peripherals = Peripheral.get_available_devices()
         print(self.peripherals)
 
-        pane = tk.PanedWindow(self, orient=tk.VERTICAL)
-        pane.pack(fill="both", expand=True)
-        button_frame = tk.Frame(pane, bg="gray", height=80)
-        main_frame = tk.Frame(pane, bg="white", height=400)
-        pane.add(button_frame)
-        pane.add(main_frame)
-
-        back_button = ttk.Button(
-            button_frame, text="Back", command=lambda: controller.show_frame("HomePage")
-        )
-        back_button.pack(expand=True, fill="both")
-
-        self.alarm_frames = {}
+        # Display updated peripherals
         if not self.peripherals:
             # Display message if no peripherals are found
             no_devices_label = tk.Label(
-                main_frame,
+                self.main_frame,
                 text="No available peripherals found.",
                 font=("Helvetica", 16),
                 bg="white",
@@ -36,13 +67,10 @@ class AlarmPage(tk.Frame):
             no_devices_label.pack(expand=True, pady=20)
         else:
             # Create alarm frames for each peripheral
-            i = 0
-            for id, peripheral in self.peripherals.items():
-                frame = self.create_alarm_frame(main_frame, id)
+            for i, (id, peripheral) in enumerate(self.peripherals.items()):
+                frame = self.create_alarm_frame(self.main_frame, id)
                 frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")
                 self.alarm_frames[id] = frame
-                i += 1
-
 
     def create_alarm_frame(self, parent, peripheral_id):
         """Creates a frame for configuring the alarm for a specific peripheral."""
