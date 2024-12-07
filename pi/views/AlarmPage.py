@@ -45,16 +45,15 @@ class AlarmPage(tk.Frame):
 
     def refresh_peripherals(self):
         """Refreshes the list of peripherals and updates the UI."""
-        # Clear existing frames
-        for frame in self.alarm_frames.values():
-            frame.destroy()
+        # Clear existing widgets in the main frame
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
         self.alarm_frames.clear()
 
         # Fetch updated peripherals
         self.peripherals = Peripheral.get_available_devices()
         print(self.peripherals)
 
-        # Display updated peripherals
         if not self.peripherals:
             # Display message if no peripherals are found
             no_devices_label = tk.Label(
@@ -64,13 +63,14 @@ class AlarmPage(tk.Frame):
                 bg="white",
                 fg="red",
             )
-            no_devices_label.pack(expand=True, pady=20)
+            no_devices_label.pack(expand=True, pady=20)  # Using pack since no other widgets will be added
         else:
             # Create alarm frames for each peripheral
             for i, (id, peripheral) in enumerate(self.peripherals.items()):
                 frame = self.create_alarm_frame(self.main_frame, id)
-                frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")
+                frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")  # Use grid for peripherals
                 self.alarm_frames[id] = frame
+
 
     def create_alarm_frame(self, parent, peripheral_id):
         """Creates a frame for configuring the alarm for a specific peripheral."""
