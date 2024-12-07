@@ -1,8 +1,10 @@
 #include "Alarm.h"
 
 // default values
-alarm_time = 0xA148; // 10:20am
-alarmFile = "hitsdifferent8.wav";
+uint16_t alarm_time = 0xA148; // 10:20am
+uint8_t alarm_index = -1;
+File alarmFile;
+uint8_t repeatCount = 0;
 
 const char *alarmFiles[] = 
 {
@@ -10,13 +12,13 @@ const char *alarmFiles[] =
     "wakeywakey.wav"
 };
 
-bool checkAlarmTime()
+bool checkAlarmTime(int hour, int minute, bool am)
 {
   if(ALARM_MINUTE(alarm_time) == minute)
   {
     if(ALARM_HOUR(alarm_time) == hour)
     {
-      if(ALARM_AM(alarm_time) == am)
+      if(ALARM_AM(alarm_time) == (am ? 1 : 0))
       {
         return true;
       }
@@ -31,6 +33,29 @@ void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer)
   playWAV(fileName, timer);
 }
 
+void repeatAlarm(hw_timer_t *timer)
+{
+  if(repeatCount)
+    {
+      Serial.println("Repeating the alarm.");
+      repeatCount--;
+      alarmFile.seek(44);
+    }
+    else
+    {
+      stopAlarm(timer);
+    }
+}
+
+void stopAlarm(hw_timer_t *timer)
+{
+  timerDetachInterrupt(timer);
+  alarmFile.close();
+  repeatCount = 0;
+  filling_buf_size = -1;
+  Serial.println("Alarm stopped.");
+}
+
 void playWAV(const char *fileName, hw_timer_t *timer)
 {
   // Open the WAV file
@@ -41,9 +66,9 @@ void playWAV(const char *fileName, hw_timer_t *timer)
     return;
   }
 
-  if(audioFile.available())
+  if(alarmFile.available())
   {
-    fillBuffer();
+    fillBuffer(alarmFile, timer);
     switchBuffers();
     timer = timerBegin(1000000); 
     timerAttachInterrupt(timer, &isr_play_sample);
@@ -51,5 +76,5 @@ void playWAV(const char *fileName, hw_timer_t *timer)
     Serial.println("WAV file playing");
   }
   
-  audioFile.seek(44); // skip WAV header
+  alarmFile.seek(44); // skip WAV header
 }
