@@ -8,8 +8,8 @@ uint8_t repeatCount = 0;
 
 const char *alarmFiles[] = 
 {
-    "hitsdifferent8.wav",
-    "wakeywakey.wav"
+    "/hitsdifferent8.wav",
+    "/wakeywakey.wav"
 };
 
 bool checkAlarmTime(int hour, int minute, bool am)
@@ -30,6 +30,7 @@ bool checkAlarmTime(int hour, int minute, bool am)
 void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer)
 {
   Serial.println("Alarm was triggered.");
+  Serial.println(fileName);
   repeatCount = repeats - 1;
   playWAV(fileName, timer);
 }
@@ -64,6 +65,8 @@ void playWAV(const char *fileName, hw_timer_t *timer)
     return;
   
   }
+  Serial.println("In playWAV...");
+  Serial.println(fileName);
   // Open the WAV file
   alarmFile = SPIFFS.open(fileName, "r"); 
   if (!alarmFile) {

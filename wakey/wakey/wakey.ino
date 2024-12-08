@@ -42,9 +42,6 @@ volatile bool stopFlag = false;
 #define P_OE 22
 #define RANDOM_PIN 34
 
-// Speaker
-
-
 // #define TIMING_PIN 5
 #define STOP_BTN 21
 
@@ -189,7 +186,7 @@ void setup()
 //  Serial.println(radio.isChipConnected());
   playingState = PLAYING_ALARM;
   sampleTimer = timerBegin(1000000); 
-  triggerAlarm("/wakeywakey.wav", 3, sampleTimer);
+  triggerAlarm(alarmFiles[1], 3, sampleTimer);
 }
 
 void loop() 
@@ -229,7 +226,7 @@ void loop()
     stopAlarm(sampleTimer);
     stopFlag = false;
   }
-//  receive_message();
+  receive_message();
 }
 
 
