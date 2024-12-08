@@ -4,10 +4,11 @@
 #include <SPIFFS.h>
 #include <FS.h>
 
+extern File msgFile;
+extern bool msgFileOpen;
+
 void openMsgFile();
 void closeMsgFile();
 void addToMsgFile(uint8_t *packet, int packet_len);
 
-extern File msgFile;
-
-#endif
+#endif // MSG_FILE_H

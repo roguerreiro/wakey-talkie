@@ -1,8 +1,11 @@
 #include "MsgFile.h"
 
+bool msgFileOpen = false;
+
 void openMsgFile()
 {
     msgFile = SPIFFS.open("/msg.bin", FILE_APPEND);
+    msgFileOpen = true;
     if (!msgFile) 
     {
         Serial.println("Failed to open file for writing");
@@ -15,6 +18,7 @@ void closeMsgFile()
     if (msgFile) 
     {
         msgFile.close();
+        msgFileOpen = false;
         Serial.println("File closed.");
     } 
     else 

@@ -9,10 +9,12 @@
 
 extern char *playing_buf;
 extern char *filling_buf;
-extern char *tmp;
-extern int playing_buf_size;
-extern int filling_buf_size;
-extern int playing_idx;
+// volatile extern char *tmp;
+extern volatile int playing_buf_size;
+extern volatile int filling_buf_size;
+extern volatile int playing_idx;
+
+
 
 void IRAM_ATTR isr_play_sample();
 void IRAM_ATTR switchBuffers();

@@ -6,17 +6,13 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SPIFFS.h>
-#include <SPI.h>
-#include <RF24.h>
-
-#include <PlayAudio.h>
-#include <Alarm.h>
+#include "PlayAudio.h"
+#include "Alarm.h"
+#include "WakeyComm.h"
 
 // hi this is Emma's good fresh code
 
-File playingFile;
-
-// Time API Setup
+// Time API Setupp
 const char* ssid       = "DukeVisitor";
 const char* password   = "";
 const char* ntpServer = "pool.ntp.org";
@@ -45,21 +41,9 @@ volatile bool stopFlag = false;
 // #define TIMING_PIN 5
 #define STOP_BTN 21
 
-// Receiver/Transmitter
-#define CE 2
-#define CSN 5
-#define CLK 18
-#define MOSI 23
-#define MISO 19
 
-SPIClass customSPI (VSPI);
-RF24 radio(CE, CSN);
-
-const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
-const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
-void rxSetup();
 void send_message();
-void receive_message();
+
 
 PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 
@@ -67,7 +51,6 @@ PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 hw_timer_t *displayTimer = NULL;
 hw_timer_t *clockTimer = NULL;
 hw_timer_t *sampleTimer = NULL;
-
 
 enum PlayingState : uint8_t
 {
@@ -193,10 +176,8 @@ void loop()
 {
   if(displayFlag)
   {
-    // digitalWrite(TIMING_PIN, 1);
     display.display(10);
     displayFlag = false;
-    // digitalWrite(TIMING_PIN, 0);
   }
   if(secondFlag)
   {
@@ -218,15 +199,27 @@ void loop()
       case PLAYING_ALARM:
       {
         fillBuffer(alarmFile, sampleTimer);
+        break;
       }
+      case PLAYING_MSG:
+      {
+        
+        break;
+      }
+      default:
+      break;
     }
   }
   if(stopFlag)
   {
+    playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
     stopAlarm(sampleTimer);
     stopFlag = false;
   }
-  receive_message();
+  if(receivePacket())
+  {
+    processPacket();
+  }
 }
 
 
@@ -250,7 +243,7 @@ void formatTime()
   // add leading zero for single digit minutes
   if(minute < 10)
   {
-    sprintf(the_time, "%d:0%d:%d", hour, minute, second);
+    sprintf(the_time, "%d:0%d:%d", hour, minute, second); // TODO: remove seconds
   }
   else
   {
@@ -269,21 +262,6 @@ void formatTime()
 }
 
 
-void receive_message()
-{
-  //SPI.beginTransaction(SPISettings(8000000, MSBFIRST, SPI_MODE0));
-   if (radio.available()) 
-   {
-    Serial.println("radio.available() return true.");
-    char receivedMessage[32] = "";
-    radio.read(&receivedMessage, sizeof(receivedMessage));
-    radio.stopListening();
-    Serial.print("Message received: ");
-    Serial.println(receivedMessage);
-    radio.startListening();
-    Serial.println(radio.isChipConnected());
-   }
-}
 
 void send_message(){
   radio.stopListening();
@@ -302,34 +280,4 @@ void send_message(){
    radio.startListening(); // Go back to listening mode
    Serial.println(radio.isChipConnected());
    delay(5);
-}
-
-void rxSetup()
-{
-  // RX/TX
-  customSPI.begin(CLK, MISO, MOSI, CSN); // Ensure CSN is used here
-  if (!radio.begin(&customSPI)) {
-    Serial.println("Failed to initialize radio");
-     while (1); // Halt if initialization fails
-  }
-  else
-  {
-    Serial.println("Radio is connected");
-  }
-  
- radio.setPALevel(RF24_PA_LOW);
- radio.setChannel(75);
- radio.openReadingPipe(1, peripheralAddress);
- radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
- radio.startListening();
- 
- if (radio.isChipConnected())
- {
-  Serial.println("Chip is connected.");
- }
- else
- {
-  Serial.println("Chip is not connected");
- }
- delay(5);
 }
