@@ -187,6 +187,7 @@ void setup()
 //  rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
+  playingState = PLAYING_ALARM;
   sampleTimer = timerBegin(1000000); 
   triggerAlarm("/wakeywakey.wav", 3, sampleTimer);
 }
