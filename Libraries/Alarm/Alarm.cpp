@@ -29,6 +29,7 @@ bool checkAlarmTime(int hour, int minute, bool am)
 
 void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer)
 {
+  Serial.println("Alarm was triggered.");
   repeatCount = repeats - 1;
   playWAV(fileName, timer);
 }
@@ -58,6 +59,11 @@ void stopAlarm(hw_timer_t *timer)
 
 void playWAV(const char *fileName, hw_timer_t *timer)
 {
+  if (timer == nullptr) {
+    Serial.println("Timer is nullptr.");
+    return;
+  
+  }
   // Open the WAV file
   alarmFile = SPIFFS.open(fileName, "r"); 
   if (!alarmFile) {
@@ -65,15 +71,22 @@ void playWAV(const char *fileName, hw_timer_t *timer)
     delay(3000);
     return;
   }
+  else
+  {
+    Serial.println("alarmFile opened.");
+  }
 
   if(alarmFile.available())
   {
     fillBuffer(alarmFile, timer);
     switchBuffers();
-    timer = timerBegin(1000000); 
     timerAttachInterrupt(timer, &isr_play_sample);
     timerAlarm(timer, 62, true, 0); // 1/16000Hz = 62.5us
     Serial.println("WAV file playing");
+  }
+  else
+  {
+    Serial.println("alarmFile not available.");
   }
   
   alarmFile.seek(44); // skip WAV header

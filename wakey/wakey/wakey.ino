@@ -83,8 +83,11 @@ PlayingState playingState = NOT_PLAYING;
 
 void formatTime();
 
-
-
+char *playing_buf = nullptr;        // Define and initialize buffers
+char *filling_buf = nullptr;
+volatile int playing_buf_size = 0;
+volatile int filling_buf_size = 0;
+volatile int playing_idx = 0;
 
 uint16_t randomColor()
 {
@@ -174,11 +177,17 @@ void setup()
   playing_buf = (char *)malloc(BUFFER_SIZE);
   filling_buf = (char *)malloc(BUFFER_SIZE);
 
-  //Rx setup
-  rxSetup();
-  Serial.print("After rxSetup(), isChipConnected()? ");
-  Serial.println(radio.isChipConnected());
+  if (playing_buf == nullptr || filling_buf == nullptr) 
+  {
+    Serial.println("Memory allocation failed.");
+    return;  // Early return to prevent further errors
+  }
 
+  //Rx setup
+//  rxSetup();
+//  Serial.print("After rxSetup(), isChipConnected()? ");
+//  Serial.println(radio.isChipConnected());
+  sampleTimer = timerBegin(1000000); 
   triggerAlarm("/wakeywakey.wav", 3, sampleTimer);
 }
 
@@ -219,7 +228,7 @@ void loop()
     stopAlarm(sampleTimer);
     stopFlag = false;
   }
-  receive_message();
+//  receive_message();
 }
 
 
