@@ -12,7 +12,7 @@ class IntercomPage(tk.Frame):
         self.controller = controller
         self.peripherals = {}
         self.checkbox_vars = {}
-        self.audio_recorder = AudioRecorder("intercom_audio.wav")  # Audio recorder instance
+        self.audio_recorder = AudioRecorder()  # Audio recorder instance
 
         # Create a paned window
         self.pane = tk.PanedWindow(self, orient=tk.VERTICAL)
@@ -96,8 +96,10 @@ class IntercomPage(tk.Frame):
             return
 
         # Update UI to show recording status
-        self.status_label.config(text="Recording...", fg="blue")
+        self.status_label.config(text="Press button to begin...", fg="blue")
         self.update_idletasks()
+
+        self.audio_recorder.enable_recording()
 
         # Use a thread to avoid blocking the UI
         threading.Thread(target=self.record_and_send, args=(selected_peripherals,)).start()
