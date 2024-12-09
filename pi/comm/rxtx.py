@@ -11,7 +11,7 @@ class Opcode(Enum):
     CONNECTION_CHECK = 0
     SET_ALARM = 1
     SET_EXPIRATION = 2
-    AUDIO_INCOMING = 3
+    AUDIO_CHUNK = 3
     AUDIO_FINISHED = 4
 
 # CE and CSN pins for nRF24L01+ on Raspberry Pi

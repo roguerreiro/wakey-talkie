@@ -1,7 +1,7 @@
 import json
 from comm.files import read_data, save_data
 from comm.rxtx import send_message, Opcode
-import os
+import wave
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
 
@@ -25,7 +25,14 @@ class Peripheral(object):
         # Create a bytes object
         buffer = bytes([high_byte, low_byte])
 
-        send_message(self.address, Opcode.SET_ALARM.value, buffer, tries=5)
+        success = send_message(self.address, Opcode.SET_ALARM.value, buffer, tries=5)
+        if success:
+            data = read_data(FILE_PATH)
+            data["peripherals"][self.id]["alarm"] = f"{hour}:{minute}{"AM" if am_pm else "PM"}"
+            save_data(data, FILE_PATH)
+
+    def send_audio(self, samples):
+        send_message(self.address, Opcode.AUDIO_CHUNK.value, samples, tries=3)
 
     @staticmethod
     def get_available_devices():
@@ -38,3 +45,40 @@ class Peripheral(object):
                 available[i] = Peripheral(i)
             i += 1
         return available
+    
+    @staticmethod
+    def send_audio_file(peripherals:dict, filename=FILE_PATH, chunk_size=31):
+        peripherals_copy = peripherals.copy()
+        try:
+            with wave.open(filename, 'rb') as wav_file:
+                n_channels = wav_file.getnchannels()
+                sample_width = wav_file.getsampwidth()
+                framerate = wav_file.getframerate()
+                n_frames = wav_file.getnframes()
+
+                print(f"Sending file: {filename}")
+                print(f"Channels: {n_channels}, Sample width: {sample_width} bytes, Frame rate: {framerate}, Frames: {n_frames}")
+
+                for id,peripheral in peripherals_copy.items():
+                    success = send_message(peripheral.address, Opcode.CONNECTION_CHECK, "".encode('utf-8'), tries=5)
+                    if not success: 
+                        print(f"Failed to connect to id {id}")
+                        del peripherals_copy[id]
+                if len(peripherals_copy) == 0:
+                    print("No peripherals available to send")
+                    return
+
+                while True:
+                    frames = wav_file.readframes(chunk_size)
+                    if not frames:
+                        break
+                    for id,peripheral in peripherals_copy.items():
+                        success = send_message(peripheral.address, Opcode.AUDIO_CHUNK, "".encode('utf-8'), tries=5)
+                        if not success: print(f"failed to send chunk to peripheral {id}")
+
+
+                for id, peripheral in peripherals_copy.items():
+                    success = send_message(peripheral.address, Opcode.AUDIO_FINISHED, "".encode('utf-8'), tries=5)
+        
+        except Exception as e:
+            print(f"Error sending audio file: {e}")

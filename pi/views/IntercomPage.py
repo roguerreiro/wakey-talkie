@@ -1,87 +1,113 @@
 import tkinter as tk
 from tkinter import ttk
-import threading
-import RPi.GPIO as GPIO
+from comm.Peripheral import Peripheral
 from comm.audio import AudioRecorder
-from comm.rxtx import send_audio_file  # Assuming a function to send the file
-
-# GPIO setup
-BUTTON_PIN = 27  # GPIO pin connected to the button
+import threading
 
 class IntercomPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
 
+        # Instance variables
+        self.controller = controller
+        self.peripherals = {}
+        self.checkbox_vars = {}
+        self.audio_recorder = AudioRecorder("intercom_audio.wav")  # Audio recorder instance
+
         # Create a paned window
-        pane = tk.PanedWindow(self, orient=tk.VERTICAL)
-        pane.pack(fill="both", expand=True)
+        self.pane = tk.PanedWindow(self, orient=tk.VERTICAL)
+        self.pane.pack(fill="both", expand=True)
 
         # Frames for buttons and main display
-        button_frame = tk.Frame(pane, bg="gray", height=80)
-        main_frame = tk.Frame(pane, bg="black", height=400)
-        pane.add(button_frame)
-        pane.add(main_frame)
+        self.button_frame = tk.Frame(self.pane, bg="gray", height=80)
+        self.main_frame = tk.Frame(self.pane, bg="white", height=400)
+        self.pane.add(self.button_frame)
+        self.pane.add(self.main_frame)
 
         # Back button
         back_button = ttk.Button(
-            button_frame, text="Back",
-            command=lambda: controller.show_frame("HomePage")
+            self.button_frame, text="Back",
+            command=lambda: self.controller.show_frame("HomePage")
         )
         back_button.pack(side="left", padx=10, pady=10)
 
-        # Status display
-        self.status_label = tk.Label(
-            main_frame, text="Idle", font=("Arial", 24), fg="white", bg="black"
+        # Refresh button
+        refresh_button = ttk.Button(
+            self.button_frame, text="Refresh",
+            command=self.refresh_peripherals
         )
-        self.status_label.pack(expand=True)
+        refresh_button.pack(side="left", padx=10, pady=10)
 
-        # Instance variables
-        self.audio_recorder = AudioRecorder("real_time_recording.wav")
-        self.recording_thread = None
+        # Status label
+        self.status_label = tk.Label(
+            self.main_frame, text="No available peripherals.", font=("Arial", 16), bg="white", fg="red"
+        )
+        self.status_label.pack(expand=True, pady=20)
 
-        # Setup GPIO
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
+        # Initial refresh
+        self.refresh_peripherals()
 
-        # Add interrupt for button
-        GPIO.add_event_detect(BUTTON_PIN, GPIO.BOTH, callback=self.handle_button_event, bouncetime=200)
+    def refresh_peripherals(self):
+        """Refresh the list of available peripherals."""
+        self.peripherals = Peripheral.get_available_devices()  # Fetch updated list
+        self.checkbox_vars.clear()
 
-    def handle_button_event(self, channel):
-        """Handle rising and falling edge events on the button."""
-        if GPIO.input(BUTTON_PIN):  # Button pressed
-            self.start_recording()
-        else:  # Button released
-            self.stop_recording()
+        # Clear main frame
+        for widget in self.main_frame.winfo_children():
+            widget.destroy()
 
-    def start_recording(self):
-        """Start recording when the button is pressed."""
-        if self.recording_thread and self.recording_thread.is_alive():
-            return  # Prevent multiple recordings at once
+        if not self.peripherals:
+            # Display no devices message
+            self.status_label = tk.Label(
+                self.main_frame, text="No available peripherals.", font=("Arial", 16), bg="white", fg="red"
+            )
+            self.status_label.pack(expand=True, pady=20)
+        else:
+            # Create checkboxes for each peripheral
+            for id, peripheral in self.peripherals.items():
+                var = tk.BooleanVar()
+                self.checkbox_vars[id] = var
+                checkbox = tk.Checkbutton(
+                    self.main_frame, text=f"Peripheral {id}", variable=var, font=("Arial", 14), bg="white"
+                )
+                checkbox.pack(anchor="w", padx=20, pady=5)
 
-        self.status_label.config(text="Recording...")
-        
-        # Start recording and transmission in a separate thread
-        self.recording_thread = threading.Thread(target=self.record_and_transmit)
-        self.recording_thread.start()
+            # Add send button
+            send_button = ttk.Button(
+                self.main_frame, text="Record and Send Audio", command=self.start_record_and_send
+            )
+            send_button.pack(pady=20)
 
-    def record_and_transmit(self):
-        """Record audio and transmit after recording finishes."""
+    def start_record_and_send(self):
+        """Start recording and then send the audio."""
+        selected_peripherals = {
+            id: self.peripherals[id]
+            for id, var in self.checkbox_vars.items() if var.get()
+        }
+
+        if not selected_peripherals:
+            self.status_label.config(text="No peripherals selected.", fg="red")
+            return
+
+        # Update UI to show recording status
+        self.status_label.config(text="Recording...", fg="blue")
+        self.update_idletasks()
+
+        # Use a thread to avoid blocking the UI
+        threading.Thread(target=self.record_and_send, args=(selected_peripherals,)).start()
+
+    def record_and_send(self, selected_peripherals):
+        """Record the audio and send it to selected peripherals."""
         try:
-            self.audio_recorder.record_and_save_audio()  # Record and save audio
-            self.status_label.config(text="Recording Complete. Sending...")
+            # Record audio
+            self.audio_recorder.record_and_save_audio()
+            self.status_label.config(text="Recording complete. Sending audio...", fg="blue")
+            self.update_idletasks()
 
-            # Transmit the saved audio file
-            send_audio_file("real_time_recording.wav")
-            self.status_label.config(text="Transmission Complete.")
+            # Send audio file to each selected peripheral
+            Peripheral.send_audio_file(selected_peripherals)
+
+            self.status_label.config(text="Audio sent successfully.", fg="green")
         except Exception as e:
-            self.status_label.config(text=f"Error: {e}")
-        finally:
-            self.status_label.config(text="Idle")
+            self.status_label.config(text=f"Error: {e}", fg="red")
 
-    def stop_recording(self):
-        """Stop recording when the button is released."""
-        # No action needed here, as the recording automatically stops after the set duration
-
-    def cleanup(self):
-        """Clean up GPIO and other resources."""
-        GPIO.cleanup()
