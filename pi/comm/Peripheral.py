@@ -28,7 +28,7 @@ class Peripheral(object):
         success = send_message(self.address, Opcode.SET_ALARM.value, buffer, tries=5)
         if success:
             data = read_data(FILE_PATH)
-            data["peripherals"][self.id]["alarm"] = f"{hour}:{minute}{"AM" if am_pm else "PM"}"
+            data["peripherals"][self.id]["alarm"] = f"{hour}:{minute}{'AM' if am_pm else 'PM'}"
             save_data(data, FILE_PATH)
 
     def send_audio(self, samples):
