@@ -33,7 +33,7 @@ def setup():
 
 def send_message(address, opcode, message: bytes, tries=1):
     if len(message) > 31:
-        print("Message too long. Must be 31 bytes or fewer.")
+        print(f"Message too long ({len(message)} bytes). Must be 31 bytes or fewer.")
         return False
 
     payload = bytearray(32)
