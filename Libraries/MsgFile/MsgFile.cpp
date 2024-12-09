@@ -1,6 +1,8 @@
 #include "MsgFile.h"
 
+File msgFile;
 bool msgFileOpen = false;
+uint16_t expireTime = 0;
 
 void openMsgFile()
 {

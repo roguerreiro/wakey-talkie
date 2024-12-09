@@ -10,6 +10,13 @@
 #include "Alarm.h"
 #include "WakeyComm.h"
 
+/*
+ * TODO fix stopping starting again.
+ * 
+ * customize waky1 and wakey2?
+ * do we want to customize repeats or have a default?
+ */
+
 // hi this is Emma's good fresh code
 
 // Time API Setupp
@@ -43,7 +50,6 @@ volatile bool stopFlag = false;
 
 
 void send_message();
-
 
 PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
 
@@ -137,13 +143,17 @@ void setup()
   // grab time from API
   minute = timeinfo.tm_min;
   hour = timeinfo.tm_hour % 12;
+  if(timeinfo.tm_hour < 12)
+  {
+    am = true;
+  }
   if(hour == 0)
   {
     hour = 12; 
   }
   second = timeinfo.tm_sec;
 
-  formatTime();
+//  formatTime();
   display.clearDisplay(); 
   display.print(the_time);
 
@@ -160,16 +170,16 @@ void setup()
   if (playing_buf == nullptr || filling_buf == nullptr) 
   {
     Serial.println("Memory allocation failed.");
-    return;  // Early return to prevent further errors
+    return;  
   }
 
   //Rx setup
-//  rxSetup();
+  rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
-  playingState = PLAYING_ALARM;
-  sampleTimer = timerBegin(1000000); 
-  triggerAlarm(alarmFiles[1], 3, sampleTimer);
+//  playingState = PLAYING_ALARM;
+//  sampleTimer = timerBegin(1000000); 
+//  triggerAlarm(alarmFiles[0], 3, sampleTimer);
 }
 
 void loop() 
@@ -182,13 +192,22 @@ void loop()
   if(secondFlag)
   {
     second++;
+    // TODO: also check expiration date stuff
     display.clearDisplay();
     formatTime();
     display.print(the_time);
-    if(checkAlarmTime(hour, minute, am))
+    if(playingState != 1) // might not need this check anymore 
     {
-      playingState = PLAYING_ALARM;
-      triggerAlarm(alarmFiles[alarm_index], 2, sampleTimer);
+      if(checkAlarmTime(hour, minute, am))
+      {
+        alarm_time = 0;
+        Serial.print("playingState: ");
+        Serial.println(playingState, DEC);
+        Serial.println("alarm - wake up!");
+        playingState = PLAYING_ALARM;
+        sampleTimer = timerBegin(1000000);
+        triggerAlarm(alarmFiles[0], 6, sampleTimer);
+      }
     }
     secondFlag = false;
   }
@@ -203,7 +222,7 @@ void loop()
       }
       case PLAYING_MSG:
       {
-        
+        // fillBuffer(msgFile, sampleTimer);
         break;
       }
       default:
@@ -233,6 +252,10 @@ void formatTime()
     {
       minute = 0;
       hour++;
+      if(hour == 12)
+      {
+        am = !am;
+      }
       if(hour == 13)
       {
         hour = 1;
@@ -276,7 +299,7 @@ void send_message(){
      Serial.println("Message sending failed");
      delay(5);
    }
-   radio.openReadingPipe(1,peripheralAddress);
+   radio.openReadingPipe(1, peripheralAddress);
    radio.startListening(); // Go back to listening mode
    Serial.println(radio.isChipConnected());
    delay(5);

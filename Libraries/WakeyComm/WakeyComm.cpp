@@ -13,15 +13,15 @@ void rxSetup() // maybe have this try again if it fails rather than while(1)
   // RX/TX
   customSPI.begin(CLK, MISO, MOSI, CSN); // Ensure CSN is used here
   if (!radio.begin(&customSPI)) {
-    Serial.println("Failed to initialize radio");
-     while (1); // Halt if initialization fails
+    Serial.println("Failed to initialize radio"); // maybe redo?
+    //  while (1); // Halt if initialization fails
   }
   else
   {
     Serial.println("Radio is connected");
   }
   
- radio.setPALevel(RF24_PA_LOW);
+ radio.setPALevel(RF24_PA_HIGH);
  radio.setChannel(75);
  radio.openReadingPipe(1, peripheralAddress);
  radio.openWritingPipe(hubAddress); // Pipe for sending responses back to the hub
@@ -42,14 +42,23 @@ bool receivePacket()
 {
    if (radio.available()) 
    {
-    Serial.println("radio.available() return true.");
-    char receivedMessage[32] = "";
-    radio.read(&receivedMessage, sizeof(receivedMessage));
+    uint8_t bytes = radio.getPayloadSize();
+    Serial.print("payload of: ");
+    Serial.println(bytes, DEC);
+    // Serial.println("radio.available() return true.");
+    // char packet[32] = "";
+    radio.read(&packet, sizeof(packet));
     radio.stopListening();
     Serial.print("Message received: ");
-    Serial.println(receivedMessage);
+    for(int i=0; i<32; i++)
+    {
+      Serial.print(packet[i], HEX);
+      Serial.print(" ");
+    }
+    Serial.print("\n");
+    // Serial.println(receivedMessage);
     radio.startListening();
-    Serial.println(radio.isChipConnected());
+    // Serial.println(radio.isChipConnected());
     return true;
    }
    return false;
@@ -75,7 +84,8 @@ void processPacket()
           Serial.println("MSG_PACKET");
           if(!msgFileOpen)
           {
-            Serial.println("need to open msgFile.");
+            openMsgFile();
+            addToMsgFile((uint8_t *)&packet[1], 31);
           }
           else
           {
@@ -92,6 +102,7 @@ void processPacket()
           Serial.println("INTERCOM_STATUS");
           break;
       default:
+      Serial.println("PING");
           break;
     }
   } 

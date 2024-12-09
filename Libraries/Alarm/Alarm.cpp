@@ -1,7 +1,7 @@
 #include "Alarm.h"
 
 // default values
-uint16_t alarm_time = 0xA148; // 10:20am
+uint16_t alarm_time = 0; 
 uint8_t alarm_index = -1;
 File alarmFile;
 uint8_t repeatCount = 0;

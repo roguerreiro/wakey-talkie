@@ -6,6 +6,7 @@
 
 extern File msgFile;
 extern bool msgFileOpen;
+extern uint16_t expireTime;
 
 void openMsgFile();
 void closeMsgFile();
