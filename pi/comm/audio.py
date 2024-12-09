@@ -46,12 +46,12 @@ class AudioRecorder:
 
     def record_and_save_audio(self):
         try:
-            # Record at 48 kHz
+            # Record at 48 kHz with 8-bit samples
             audio_data = sd.rec(
                 int(MAXIMUM_DURATION * INPUT_SAMPLE_RATE),  # Maximum duration
                 samplerate=INPUT_SAMPLE_RATE,
                 channels=CHANNELS,
-                dtype='int16'
+                dtype='int8'  # Use 8-bit integers
             )
             sd.wait()  # Wait for recording to finish
 
@@ -60,7 +60,7 @@ class AudioRecorder:
 
             # Save the downsampled audio
             write(self.filename, OUTPUT_SAMPLE_RATE, downsampled_audio)
-            print(f"Recording saved as {self.filename}")
+            print(f"Recording saved as {self.filename} with 8-bit samples.")
         except Exception as e:
             print(f"Error during recording: {e}")
         finally:

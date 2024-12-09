@@ -1,5 +1,6 @@
 from files import read_data, save_data
 from rxtx import setup, send_message, Opcode
+from audio import AudioRecorder
 import wave
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
@@ -86,5 +87,9 @@ class Peripheral(object):
 
 if __name__ == "__main__":
     setup()
+    filename = "test.wav"
     peripherals = {0:Peripheral(0)}
-    Peripheral.send_audio_file(peripherals)
+    recorder = AudioRecorder(filename)
+    print("Starting recording...")
+    recorder.record_and_save_audio()
+    Peripheral.send_audio_file(peripherals, filename)
