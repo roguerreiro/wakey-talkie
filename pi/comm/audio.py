@@ -78,13 +78,4 @@ class AudioRecorder:
         """Clean up GPIO resources."""
         GPIO.cleanup()
 
-# Example usage:
-if __name__ == "__main__":
-    recorder = AudioRecorder("real_time_recording.wav")
-    try:
-        print("Press the button to start/stop recording.")
-        while True:
-            pass  # Main loop
-    except KeyboardInterrupt:
-        print("Exiting...")
-        recorder.cleanup()
+    

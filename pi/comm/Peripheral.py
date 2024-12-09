@@ -1,4 +1,3 @@
-import json
 from comm.files import read_data, save_data
 from comm.rxtx import send_message, Opcode
 import wave
@@ -82,3 +81,7 @@ class Peripheral(object):
         
         except Exception as e:
             print(f"Error sending audio file: {e}")
+
+if __name__ == "__main__":
+    peripherals = {0:Peripheral(0)}
+    Peripheral.send_audio_file(peripherals)

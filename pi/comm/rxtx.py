@@ -11,7 +11,7 @@ class Opcode(Enum):
     CONNECTION_CHECK = 0
     SET_ALARM = 1
     SET_EXPIRATION = 2
-    AUDIO_CHUNK = 3
+    AUDIO_INCOMING = 3
     AUDIO_FINISHED = 4
 
 # CE and CSN pins for nRF24L01+ on Raspberry Pi
@@ -31,14 +31,14 @@ def setup():
     radio.setChannel(75)           # Ensure the same channel on both devices
     print(radio.isChipConnected())
 
-def send_message(address, opcode, message: bytes, tries=1):
+def send_message(address, opcode, message, tries=1):
     if len(message) > 31:
         print("Message too long. Must be 31 bytes or fewer.")
         return False
 
     payload = bytearray(32)
     payload[0] = opcode
-    payload[1:1 + len(message)] = message
+    payload[1:1 + len(message)] = message.encode('utf-8')
 
     # Pad the message if it's shorter than 30 bytes
     if len(message) < 31:
