@@ -69,7 +69,7 @@ class Peripheral(object):
                     return
 
                 while True:
-                    frames = wav_file.readframes(chunk_size)
+                    frames = wav_file.readframes(15)
                     if not frames:
                         break
                     for id,peripheral in peripherals_copy.items():
@@ -79,6 +79,7 @@ class Peripheral(object):
 
                 for id, peripheral in peripherals_copy.items():
                     success = send_message(peripheral.address, Opcode.AUDIO_FINISHED.value, "".encode('utf-8'), tries=5)
+                
         
         except Exception as e:
             print(f"Error sending audio file: {e}")
