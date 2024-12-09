@@ -48,40 +48,40 @@ class IntercomPage(tk.Frame):
         # Initial refresh
         self.refresh_peripherals()
 
-def refresh_peripherals(self):
-    """Refresh the list of available peripherals."""
-    self.peripherals = Peripheral.get_available_devices()  # Fetch updated list
-    self.checkbox_vars.clear()
+    def refresh_peripherals(self):
+        """Refresh the list of available peripherals."""
+        self.peripherals = Peripheral.get_available_devices()  # Fetch updated list
+        self.checkbox_vars.clear()
 
-    # Clear checkboxes and buttons from the main frame
-    for widget in self.main_frame.winfo_children():
-        if widget != self.status_label:
-            widget.destroy()
+        # Clear checkboxes and buttons from the main frame
+        for widget in self.main_frame.winfo_children():
+            if widget != self.status_label:
+                widget.destroy()
 
-    if not self.peripherals:
-        # Update status label for no peripherals
-        self.status_label.config(
-            text="No available peripherals.", font=("Arial", 16), fg="red"
-        )
-        self.status_label.pack(expand=True, pady=20)
-    else:
-        # Hide the status label
-        self.status_label.pack_forget()
-
-        # Create checkboxes for each peripheral
-        for id, peripheral in self.peripherals.items():
-            var = tk.BooleanVar()
-            self.checkbox_vars[id] = var
-            checkbox = tk.Checkbutton(
-                self.main_frame, text=f"Peripheral {id}", variable=var, font=("Arial", 14), bg="white"
+        if not self.peripherals:
+            # Update status label for no peripherals
+            self.status_label.config(
+                text="No available peripherals.", font=("Arial", 16), fg="red"
             )
-            checkbox.pack(anchor="w", padx=20, pady=5)
+            self.status_label.pack(expand=True, pady=20)
+        else:
+            # Hide the status label
+            self.status_label.pack_forget()
 
-        # Add send button
-        send_button = ttk.Button(
-            self.main_frame, text="Record and Send Audio", command=self.start_record_and_send
-        )
-        send_button.pack(pady=20)
+            # Create checkboxes for each peripheral
+            for id, peripheral in self.peripherals.items():
+                var = tk.BooleanVar()
+                self.checkbox_vars[id] = var
+                checkbox = tk.Checkbutton(
+                    self.main_frame, text=f"Peripheral {id}", variable=var, font=("Arial", 14), bg="white"
+                )
+                checkbox.pack(anchor="w", padx=20, pady=5)
+
+            # Add send button
+            send_button = ttk.Button(
+                self.main_frame, text="Record and Send Audio", command=self.start_record_and_send
+            )
+            send_button.pack(pady=20)
 
 
     def start_record_and_send(self):
