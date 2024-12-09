@@ -33,7 +33,7 @@ class Peripheral(object):
         available ={}
         i = 0
         for peripheral in data["peripherals"]:
-            success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK.value, "", tries=3)
+            success = send_message(peripheral["address"], Opcode.CONNECTION_CHECK.value, "".encode('utf-8'), tries=3)
             if success:
                 available[i] = Peripheral(i)
             i += 1
