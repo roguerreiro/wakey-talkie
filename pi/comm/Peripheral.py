@@ -1,8 +1,9 @@
-from comm.files import read_data, save_data
-from comm.rxtx import send_message, Opcode
+from files import read_data, save_data
+from rxtx import setup, send_message, Opcode
 import wave
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
+AUDIO_PATH = "/home/pi/wakey-talkie/pi/real_time_recording.wav"
 
 class Peripheral(object):
     def __init__(self, id):
@@ -46,7 +47,7 @@ class Peripheral(object):
         return available
     
     @staticmethod
-    def send_audio_file(peripherals:dict, filename=FILE_PATH, chunk_size=31):
+    def send_audio_file(peripherals:dict, filename=AUDIO_PATH, chunk_size=31):
         peripherals_copy = peripherals.copy()
         try:
             with wave.open(filename, 'rb') as wav_file:
@@ -59,7 +60,7 @@ class Peripheral(object):
                 print(f"Channels: {n_channels}, Sample width: {sample_width} bytes, Frame rate: {framerate}, Frames: {n_frames}")
 
                 for id,peripheral in peripherals_copy.items():
-                    success = send_message(peripheral.address, Opcode.CONNECTION_CHECK, "".encode('utf-8'), tries=5)
+                    success = send_message(peripheral.address, Opcode.CONNECTION_CHECK.value, "".encode('utf-8'), tries=5)
                     if not success: 
                         print(f"Failed to connect to id {id}")
                         del peripherals_copy[id]
@@ -72,16 +73,17 @@ class Peripheral(object):
                     if not frames:
                         break
                     for id,peripheral in peripherals_copy.items():
-                        success = send_message(peripheral.address, Opcode.AUDIO_CHUNK, "".encode('utf-8'), tries=5)
+                        success = send_message(peripheral.address, Opcode.AUDIO_CHUNK.value, frames, tries=5)
                         if not success: print(f"failed to send chunk to peripheral {id}")
 
 
                 for id, peripheral in peripherals_copy.items():
-                    success = send_message(peripheral.address, Opcode.AUDIO_FINISHED, "".encode('utf-8'), tries=5)
+                    success = send_message(peripheral.address, Opcode.AUDIO_FINISHED.value, "".encode('utf-8'), tries=5)
         
         except Exception as e:
             print(f"Error sending audio file: {e}")
 
 if __name__ == "__main__":
+    setup()
     peripherals = {0:Peripheral(0)}
     Peripheral.send_audio_file(peripherals)

@@ -1,7 +1,7 @@
-from pyrf24 import RF24, RF24_PA_LOW
+from pyrf24 import RF24, RF24_PA_HIGH
 import RPi.GPIO as GPIO
 import time
-from comm.files import read_data, save_data
+from files import read_data, save_data
 import wave
 from enum import Enum
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1
@@ -27,7 +27,7 @@ def setup():
     # Initialize the radio
     radio.begin()
     radio.setAutoAck(True)
-    radio.setPALevel(RF24_PA_LOW)  # Set power level to low for testing
+    radio.setPALevel(RF24_PA_HIGH)  # Set power level to low for testing
     radio.setChannel(75)           # Ensure the same channel on both devices
     print(radio.isChipConnected())
 
