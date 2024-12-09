@@ -46,14 +46,17 @@ class AudioRecorder:
 
     def record_and_save_audio(self):
         try:
-            # Record at 48 kHz with 8-bit samples
+            # Record at 48 kHz with 16-bit samples
             audio_data = sd.rec(
                 int(MAXIMUM_DURATION * INPUT_SAMPLE_RATE),  # Maximum duration
                 samplerate=INPUT_SAMPLE_RATE,
                 channels=CHANNELS,
-                dtype='uint8'  # Use 8-bit integers
+                dtype='int16'  # Record with 16-bit depth
             )
             sd.wait()  # Wait for recording to finish
+
+            # Convert 16-bit to unsigned 8-bit
+            audio_data = (audio_data / 256).astype('uint8')
 
             # Downsample by taking every third sample
             downsampled_audio = audio_data[::3]
@@ -65,6 +68,7 @@ class AudioRecorder:
             print(f"Error during recording: {e}")
         finally:
             self.is_recording = False
+
 
     def stop_recording(self):
         """Stop the recording."""
