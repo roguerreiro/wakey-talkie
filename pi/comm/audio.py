@@ -12,7 +12,7 @@ GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 INPUT_SAMPLE_RATE = 48000  # Microphone's sample rate
 OUTPUT_SAMPLE_RATE = 16000  # Desired sample rate
 CHANNELS = 1
-MAXIMUM_DURATION = 10
+MAXIMUM_DURATION = 5
 
 class AudioRecorder:
     def __init__(self, filename="real_time_recording.wav"):

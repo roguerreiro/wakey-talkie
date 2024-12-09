@@ -70,11 +70,11 @@ class Peripheral(object):
                     return
 
                 while True:
-                    frames = wav_file.readframes(15)
+                    frames = wav_file.readframes(31)
                     if not frames:
                         break
                     for id,peripheral in peripherals_copy.items():
-                        success = send_message(peripheral.address, Opcode.AUDIO_CHUNK.value, frames, tries=5)
+                        success = send_message(peripheral.address, Opcode.AUDIO_CHUNK.value, frames, tries=2)
                         if not success: print(f"failed to send chunk to peripheral {id}")
 
 
