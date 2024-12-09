@@ -55,19 +55,22 @@ class AudioRecorder:
             )
             sd.wait()  # Wait for recording to finish
 
-            # Convert 16-bit to unsigned 8-bit
-            audio_data = (audio_data / 256).astype('uint8')
+            # Normalize `int16` to the range [0, 255]
+            # First scale to [0, 1] and then to [0, 255]
+            audio_data_normalized = ((audio_data - audio_data.min()) / (audio_data.max() - audio_data.min())) * 255
+            audio_data_uint8 = audio_data_normalized.astype('uint8')
 
             # Downsample by taking every third sample
-            downsampled_audio = audio_data[::3]
+            downsampled_audio = audio_data_uint8[::3]
 
             # Save the downsampled audio
             write(self.filename, OUTPUT_SAMPLE_RATE, downsampled_audio)
-            print(f"Recording saved as {self.filename} with 8-bit samples.")
+            print(f"Recording saved as {self.filename} with normalized 8-bit samples.")
         except Exception as e:
             print(f"Error during recording: {e}")
         finally:
             self.is_recording = False
+
 
 
     def stop_recording(self):
