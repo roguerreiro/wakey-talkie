@@ -14,7 +14,7 @@ def read_data(path):
 def save_data(data, path):
     try:
         with open(path, "w") as file:
-            json.dump(data, path, indent=4)
+            json.dump(data, file, indent=4) 
             return True
     except FileNotFoundError:
         print(f"No file found at {path}")
