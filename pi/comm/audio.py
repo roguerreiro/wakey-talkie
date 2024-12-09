@@ -51,7 +51,7 @@ class AudioRecorder:
                 int(MAXIMUM_DURATION * INPUT_SAMPLE_RATE),  # Maximum duration
                 samplerate=INPUT_SAMPLE_RATE,
                 channels=CHANNELS,
-                dtype='int8'  # Use 8-bit integers
+                dtype='uint8'  # Use 8-bit integers
             )
             sd.wait()  # Wait for recording to finish
 
