@@ -1,4 +1,5 @@
 #include "WakeyComm.h"
+#include "PlayAudio.h"
 
 const uint64_t peripheralAddress = 0xF0F0F0F0E1LL; // Peripheral's listening address
 const uint64_t hubAddress = 0xF0F0F0F0D2LL; // Address to send responses to the hub
@@ -93,10 +94,13 @@ void processPacket()
           }
           break;
       case MSG_COMPLETE:
-          Serial.println("MSG_COMPLETE");
-          // close file
-          // call playwav or something
-          // playingStatus = PLAYING_MSG;
+          Serial.println("MSG_COMPLETE-----------------------------------------------------------------");
+          if(playingState == NOT_PLAYING)
+          {
+            closeMsgFile();
+            playingState = PLAYING_MSG;
+            playMsg(sampleTimer); // todo take away timer maybe
+          }
           break;
       case INTERCOM_STATUS:
           Serial.println("INTERCOM_STATUS");

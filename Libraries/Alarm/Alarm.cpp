@@ -54,7 +54,8 @@ void stopAlarm(hw_timer_t *timer)
   timerDetachInterrupt(timer);
   alarmFile.close();
   repeatCount = 0;
-  filling_buf_size = -1;
+  filling_buf_size = 0;
+  playingState = NOT_PLAYING;
   Serial.println("Alarm stopped.");
 }
 

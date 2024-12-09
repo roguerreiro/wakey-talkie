@@ -12,6 +12,8 @@
 
 /*
  * TODO fix stopping starting again.
+ *could toggle timing pin each time switch is called (print breaks wdt)
+ * 
  * 
  * customize waky1 and wakey2?
  * do we want to customize repeats or have a default?
@@ -58,13 +60,6 @@ hw_timer_t *displayTimer = NULL;
 hw_timer_t *clockTimer = NULL;
 hw_timer_t *sampleTimer = NULL;
 
-enum PlayingState : uint8_t
-{
-  NOT_PLAYING = 0,
-  PLAYING_ALARM,
-  PLAYING_MSG
-};
-
 PlayingState playingState = NOT_PLAYING;
 
 void formatTime();
@@ -100,6 +95,7 @@ void setup()
   Serial.begin(115200);
 
   // Enable button interrupt
+  pinMode(5, OUTPUT);
   pinMode(STOP_BTN, INPUT);
   attachInterrupt(STOP_BTN, isr_stop_pressed, RISING);
 
@@ -177,9 +173,9 @@ void setup()
   rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
-//  playingState = PLAYING_ALARM;
-//  sampleTimer = timerBegin(1000000); 
-//  triggerAlarm(alarmFiles[0], 3, sampleTimer);
+  playingState = PLAYING_ALARM;
+  sampleTimer = timerBegin(1000000); 
+  triggerAlarm(alarmFiles[0], 3, sampleTimer);
 }
 
 void loop() 
@@ -213,21 +209,33 @@ void loop()
   }
   if(filling_buf_size == 0)
   {
+    Serial.println("filling buffer is empty and i'm gonna try and fill.");
     switch(playingState)
     {
+      case NOT_PLAYING:
+        break;
       case PLAYING_ALARM:
       {
+        Serial.println("FillBuffer from alarmFile");
         fillBuffer(alarmFile, sampleTimer);
         break;
       }
       case PLAYING_MSG:
       {
-        // fillBuffer(msgFile, sampleTimer);
+        Serial.println("FillBuffer from msgFile!");
+        if(!msgFile) Serial.println("msgFile is NULL.");
+        fillBuffer(msgFile, sampleTimer);
         break;
       }
       default:
-      break;
+        Serial.println("DEFAULT STATE");
+        break;
     }
+  }
+  else
+  {
+    Serial.print("Filling buf size not 0 but: ");
+    Serial.println(filling_buf_size, DEC);
   }
   if(stopFlag)
   {
@@ -237,6 +245,7 @@ void loop()
   }
   if(receivePacket())
   {
+    //sampleTimer = timerBegin(1000000);
     processPacket();
   }
 }

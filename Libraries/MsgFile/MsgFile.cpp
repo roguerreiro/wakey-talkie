@@ -13,6 +13,13 @@ void openMsgFile()
         Serial.println("Failed to open file for writing");
         return;
     }
+
+    // Check if the file exists
+    if (SPIFFS.exists("/msg.bin")) {
+        Serial.println("File /msg.bin exists!");
+    } else {
+        Serial.println("File /msg.bin does not exist. ------------------------");
+    }
 }
 
 void closeMsgFile() 
@@ -26,6 +33,12 @@ void closeMsgFile()
     else 
     {
         Serial.println("Message file was never open so could not be closed.");
+    }
+    // Check if the file exists
+    if (SPIFFS.exists("/msg.bin")) {
+        Serial.println("File /msg.bin exists!");
+    } else {
+        Serial.println("File /msg.bin does not exist. ------------------------");
     }
 }
 
