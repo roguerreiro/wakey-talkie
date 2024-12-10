@@ -4,17 +4,21 @@ File msgFile;
 
 void IRAM_ATTR isr_play_sample()
 {
-  dacWrite(DAC_OUT, playing_buf[playing_idx]);
-  playing_idx++;
-  if(playing_idx == playing_buf_size) 
+  if(playing_buf_size != 0)
   {
-    switchBuffers();
+    dacWrite(DAC_OUT, playing_buf[playing_idx]);
+    playing_idx++;
+    if(playing_idx == playing_buf_size) 
+    {
+      switchBuffers();
+    }
   }
+  
 }
 
 void IRAM_ATTR switchBuffers()
 {
-  noInterrupts();
+  // noInterrupts();
   // Serial.println("SB");
   playing_buf_size = filling_buf_size;
   filling_buf_size = 0;
@@ -22,16 +26,33 @@ void IRAM_ATTR switchBuffers()
   filling_buf = playing_buf;
   playing_buf = tmp;
   playing_idx = 0;
-  interrupts();
+  // interrupts();
 }
 
 void fillBuffer(File file)
 {
-  Serial.println("FB");
+  Serial.print("FB - ");
   if(file.available())
   {
     filling_buf_size = file.readBytes(filling_buf, BUFFER_SIZE);
+    if(filling_buf_size == 0)
+    {
+      Serial.println("FILLING BUF SIZE IS 0");
+    }
     // Serial.println(filling_buf_size, DEC);
+    Serial.println("SUCCESS");
+    if(playing_buf_size == 0)
+    {
+      Serial.println("playing_buf_size == 0");
+      switchBuffers();
+    }
+    if(playing_idx > playing_buf_size)
+    {
+      Serial.print("playing_buf_size: ");
+      Serial.println(playing_buf_size, DEC);
+      Serial.print("playing_idx: ");
+      Serial.println(playing_idx, DEC);
+    }
   }
   else if(playingState == PLAYING_ALARM)
   {
@@ -44,6 +65,10 @@ void fillBuffer(File file)
     timerDetachInterrupt(sampleTimer);
     timerEnd(sampleTimer);
     msgFile.close();
+  }
+  else
+  {
+    Serial.println("FAIL ----------------");
   }
 }
 

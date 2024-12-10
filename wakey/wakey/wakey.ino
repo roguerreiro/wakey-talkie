@@ -220,7 +220,7 @@ void loop()
       }
       case PLAYING_MSG:
       {
-//          if (SPIFFS.exists("/msg.bin")) {
+//          if (SPIFFS.exists("/msg.bin")) {i
 //              Serial.println("File /msg.bin exists!");
 //          } else {
 //              Serial.println("File /msg.bin does not exist!");

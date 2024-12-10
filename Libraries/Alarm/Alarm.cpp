@@ -41,7 +41,18 @@ void repeatAlarm()
     {
       Serial.println("Repeating the alarm.");
       repeatCount--;
+      Serial.println("Before seek");
+      Serial.print("playing_buf_size: ");
+      Serial.println(playing_buf_size, DEC);
+      Serial.print("playing_idx: ");
+      Serial.println(playing_idx, DEC);
       alarmFile.seek(44);
+      // playing_idx = 0; // shouldn't have to do
+      Serial.println("After seek");
+      Serial.print("playing_buf_size: ");
+      Serial.println(playing_buf_size, DEC);
+      Serial.print("playing_idx: ");
+      Serial.println(playing_idx, DEC);
     }
     else
     {
