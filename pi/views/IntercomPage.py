@@ -108,6 +108,7 @@ class IntercomPage(tk.Frame):
         """Record the audio and send it to selected peripherals."""
         try:
             # Record audio
+            self.status_label.config(text="Recording...", fg="black")
             self.audio_recorder.record_and_save_audio()
             self.status_label.config(text="Recording complete. Sending audio...", fg="blue")
             self.update_idletasks()

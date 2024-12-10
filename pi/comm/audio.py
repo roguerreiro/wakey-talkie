@@ -80,6 +80,7 @@ class AudioRecorder:
         print("Recording stopped.")
         # `sd.stop()` stops audio immediately, but data already recorded is saved
         sd.stop()
+        self.recording_enabled = False
 
     def cleanup(self):
         """Clean up GPIO resources."""
