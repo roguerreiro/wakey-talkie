@@ -1,11 +1,6 @@
 #include "PlayAudio.h"
 
-// char *playing_buf = nullptr;  
-// char *filling_buf = nullptr;
-// volatile char *tmp = nullptr;
-// volatile int playing_buf_size = 0;
-// volatile int filling_buf_size = 0;
-// volatile int playing_idx = 0;
+File msgFile;
 
 void IRAM_ATTR isr_play_sample()
 {
@@ -30,7 +25,7 @@ void IRAM_ATTR switchBuffers()
   interrupts();
 }
 
-void fillBuffer(File file, hw_timer_t *timer)
+void fillBuffer(File file)
 {
   // Serial.println("fillBuffer");
   if(file.available())
@@ -38,8 +33,38 @@ void fillBuffer(File file, hw_timer_t *timer)
     filling_buf_size = file.readBytes(filling_buf, BUFFER_SIZE);
     // Serial.println(filling_buf_size, DEC);
   }
+  else if(playingState == PLAYING_ALARM)
+  {
+    repeatAlarm();
+  }
+  else if(playingState == PLAYING_MSG)
+  {
+    Serial.println("msgFile is over, closing and detaching.");
+    playingState = NOT_PLAYING;
+    timerDetachInterrupt(sampleTimer);
+    msgFile.close();
+  }
+}
+
+void playMsg()
+{
+  msgFile = SPIFFS.open("/msg.bin", "r");
+  if(!msgFile)
+  {
+    Serial.println("Failed to open /msg.bin");
+    return;
+  }
+  if(msgFile.available())
+  {
+    fillBuffer(msgFile);
+    switchBuffers();
+    sampleTimer = timerBegin(1000000);
+    timerAttachInterrupt(sampleTimer, &isr_play_sample);
+    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+    Serial.println("playing msgFile");
+  }
   else
   {
-    repeatAlarm(timer);
+    Serial.println("msgFile not available");
   }
 }

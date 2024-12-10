@@ -94,9 +94,17 @@ void processPacket()
           break;
       case MSG_COMPLETE:
           Serial.println("MSG_COMPLETE");
-          // close file
-          // call playwav or something
-          // playingStatus = PLAYING_MSG;
+          if(playingState == NOT_PLAYING)
+          {
+            Serial.println("Closing msgFile");
+            closeMsgFile();
+            playingState = PLAYING_MSG;
+            playMsg();
+          }
+          else
+          {
+            Serial.println("something is wrong");
+          }
           break;
       case INTERCOM_STATUS:
           Serial.println("INTERCOM_STATUS");

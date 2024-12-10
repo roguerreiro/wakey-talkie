@@ -58,12 +58,6 @@ hw_timer_t *displayTimer = NULL;
 hw_timer_t *clockTimer = NULL;
 hw_timer_t *sampleTimer = NULL;
 
-enum PlayingState : uint8_t
-{
-  NOT_PLAYING = 0,
-  PLAYING_ALARM,
-  PLAYING_MSG
-};
 
 PlayingState playingState = NOT_PLAYING;
 
@@ -150,6 +144,7 @@ void setup()
   if(hour == 0)
   {
     hour = 12; 
+    Serial.println("this ran.");
   }
   second = timeinfo.tm_sec;
 
@@ -177,9 +172,9 @@ void setup()
   rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
-//  playingState = PLAYING_ALARM;
-//  sampleTimer = timerBegin(1000000); 
-//  triggerAlarm(alarmFiles[0], 3, sampleTimer);
+  playingState = PLAYING_ALARM;
+  sampleTimer = timerBegin(1000000); 
+  triggerAlarm(alarmFiles[0], 3, sampleTimer);
 }
 
 void loop() 
@@ -217,12 +212,26 @@ void loop()
     {
       case PLAYING_ALARM:
       {
-        fillBuffer(alarmFile, sampleTimer);
+        fillBuffer(alarmFile);
         break;
       }
       case PLAYING_MSG:
       {
-        // fillBuffer(msgFile, sampleTimer);
+          if (SPIFFS.exists("/msg.bin")) {
+              Serial.println("File /msg.bin exists!");
+          } else {
+              Serial.println("File /msg.bin does not exist!");
+          }
+          if(msgFile.available())
+          {
+            Serial.println("msgFile available");
+          }
+          else
+          {
+            Serial.println("msgFile not available");
+          }
+          // NOTE: co0uld have to do with seek?
+        fillBuffer(msgFile);
         break;
       }
       default:
@@ -232,7 +241,7 @@ void loop()
   if(stopFlag)
   {
     playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
-    stopAlarm(sampleTimer);
+    stopAlarm();
     stopFlag = false;
   }
   if(receivePacket())

@@ -1,6 +1,6 @@
 #include "MsgFile.h"
 
-File msgFile;
+// File msgFile;
 bool msgFileOpen = false;
 uint16_t expireTime = 0;
 
@@ -12,6 +12,11 @@ void openMsgFile()
     {
         Serial.println("Failed to open file for writing");
         return;
+    }
+    if (SPIFFS.exists("/msg.bin")) {
+        Serial.println("File /msg.bin exists!");
+    } else {
+        Serial.println("File /msg.bin does not exist!");
     }
 }
 

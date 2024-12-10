@@ -19,8 +19,8 @@ extern uint8_t repeatCount;
 
 bool checkAlarmTime(int hour, int minute, bool am);
 void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer);
-void repeatAlarm(hw_timer_t *timer);
-void stopAlarm(hw_timer_t *timer);
-void playWAV(const char *fileName, hw_timer_t *timer);
+void repeatAlarm();
+void stopAlarm();
+void playWAV(const char *fileName);
 
 #endif // ALARM_H

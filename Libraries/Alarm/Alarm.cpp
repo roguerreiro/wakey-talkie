@@ -32,10 +32,10 @@ void triggerAlarm(const char *fileName, int repeats, hw_timer_t *timer)
   Serial.println("Alarm was triggered.");
   Serial.println(fileName);
   repeatCount = repeats - 1;
-  playWAV(fileName, timer);
+  playWAV(fileName);
 }
 
-void repeatAlarm(hw_timer_t *timer)
+void repeatAlarm()
 {
   if(repeatCount)
     {
@@ -45,26 +45,22 @@ void repeatAlarm(hw_timer_t *timer)
     }
     else
     {
-      stopAlarm(timer);
+      stopAlarm();
     }
 }
 
-void stopAlarm(hw_timer_t *timer)
+void stopAlarm()
 {
-  timerDetachInterrupt(timer);
+  timerDetachInterrupt(sampleTimer);
   alarmFile.close();
   repeatCount = 0;
   filling_buf_size = -1;
+  playingState = NOT_PLAYING;
   Serial.println("Alarm stopped.");
 }
 
-void playWAV(const char *fileName, hw_timer_t *timer)
+void playWAV(const char *fileName)
 {
-  if (timer == nullptr) {
-    Serial.println("Timer is nullptr.");
-    return;
-  
-  }
   Serial.println("In playWAV...");
   Serial.println(fileName);
   // Open the WAV file
@@ -81,10 +77,10 @@ void playWAV(const char *fileName, hw_timer_t *timer)
 
   if(alarmFile.available())
   {
-    fillBuffer(alarmFile, timer);
+    fillBuffer(alarmFile);
     switchBuffers();
-    timerAttachInterrupt(timer, &isr_play_sample);
-    timerAlarm(timer, 62, true, 0); // 1/16000Hz = 62.5us
+    timerAttachInterrupt(sampleTimer, &isr_play_sample);
+    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
     Serial.println("WAV file playing");
   }
   else
