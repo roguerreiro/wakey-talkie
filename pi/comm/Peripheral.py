@@ -4,7 +4,7 @@ from comm.audio import AudioRecorder
 import wave
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
-AUDIO_PATH = "/home/pi/wakey-talkie/pi/real_time_recording.wav"
+AUDIO_PATH = "/home/pi/wakey-talkie/audio/hitsdifferent8.wav"
 
 class Peripheral(object):
     def __init__(self, id):
