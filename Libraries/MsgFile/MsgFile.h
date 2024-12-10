@@ -7,6 +7,7 @@
 extern File msgFile;
 extern bool msgFileCreated;
 extern bool msgFileOpened;
+extern bool msgWaiting;
 extern uint16_t expireTime;
 
 void listFiles();

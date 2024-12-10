@@ -94,8 +94,16 @@ void processPacket()
           {
             Serial.println("Closing msgFile");
             closeMsgFile();
-            playingState = PLAYING_MSG;
-            playMsg();
+            if(0) // TODO: fix
+            {
+              // person is here > play message immediately
+              playingState = PLAYING_MSG;
+              playMsg();
+            }
+            else
+            {
+              msgWaiting = true;
+            }
           }
           else
           {

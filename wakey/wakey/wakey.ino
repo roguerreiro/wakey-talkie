@@ -36,6 +36,7 @@ bool am;
 volatile bool displayFlag = false;
 volatile bool secondFlag = false;
 volatile bool stopFlag = false;
+volatile bool msgFlag = false;
 
 // LED Matrix Display Pins
 #define P_LAT 12
@@ -47,7 +48,8 @@ volatile bool stopFlag = false;
 #define RANDOM_PIN 34
 
 // #define TIMING_PIN 5
-#define STOP_BTN 21
+#define STOP_BTN 35 // NEEDS TO BE SET, THIS IS TEMP
+#define MSG_BTN 21 
 
 
 void send_message();
@@ -79,7 +81,10 @@ void IRAM_ATTR isr_stop_pressed()
 {
   stopFlag = true;
 }
-
+void IRAM_ATTR isr_msg_pressed()
+{
+  msgFlag = true;
+}
 void IRAM_ATTR isr_display_updater()
 {
   displayFlag = true;
@@ -97,6 +102,9 @@ void setup()
   // Enable button interrupt
   pinMode(STOP_BTN, INPUT);
   attachInterrupt(STOP_BTN, isr_stop_pressed, RISING);
+
+  pinMode(MSG_BTN, INPUT);
+  attachInterrupt(MSG_BTN, isr_msg_pressed, RISING);
 
   // connect to WiFi
   Serial.printf("Connecting to %s ", ssid);
@@ -246,6 +254,20 @@ void loop()
     playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
     stopAlarm();
     stopFlag = false;
+  }
+  if(msgFlag)
+  {
+    if(msgWaiting)
+    {
+      Serial.println("Message playback initiated");
+      msgWaiting = false;
+      playingState = PLAYING_MSG;
+      playMsg();
+    }
+  }
+  if(msgWaiting)
+  {
+    Serial.println("message is waiting!!!!!!!!");
   }
   if(receivePacket())
   {
