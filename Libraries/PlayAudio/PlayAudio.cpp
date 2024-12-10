@@ -27,7 +27,7 @@ void IRAM_ATTR switchBuffers()
 
 void fillBuffer(File file)
 {
-  // Serial.println("FB");
+  Serial.println("FB");
   if(file.available())
   {
     filling_buf_size = file.readBytes(filling_buf, BUFFER_SIZE);
@@ -64,31 +64,30 @@ void playMsg()
     Serial.println("msgFile is NULL");
   }
     // Print the first 64 bytes
-  Serial.println("Printing the first 64 bytes of /msg.bin:");
-
-  for (int i = 0; i < 64; i++) {
-    if (msgFile.available()) {
-      byte data = msgFile.read();  // Read one byte at a time
-      Serial.print("Byte ");
-      Serial.print(i);
-      Serial.print(": ");
-      Serial.println(data, HEX);  // Print byte in hexadecimal format
-    } else {
-      Serial.println("End of file reached before 64 bytes.");
-      break;
-    }
+  // Serial.println("Printing the first 64 bytes of /msg.bin:");
+  // for (int i = 0; i < 64; i++) {
+  //   if (msgFile.available()) {
+  //     byte data = msgFile.read();  // Read one byte at a time
+  //     Serial.print("Byte ");
+  //     Serial.print(i);
+  //     Serial.print(": ");
+  //     Serial.println(data, HEX);  // Print byte in hexadecimal format
+  //   } else {
+  //     Serial.println("End of file reached before 64 bytes.");
+  //     break;
+  //   }
+  // }
+  if(msgFile.available())
+  {
+    fillBuffer(msgFile);
+    switchBuffers();
+    sampleTimer = timerBegin(1000000);
+    timerAttachInterrupt(sampleTimer, &isr_play_sample);
+    timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
+    Serial.println("playing msgFile");
   }
-  // if(msgFile.available())
-  // {
-  //   fillBuffer(msgFile);
-  //   switchBuffers();
-  //   sampleTimer = timerBegin(1000000);
-  //   timerAttachInterrupt(sampleTimer, &isr_play_sample);
-  //   timerAlarm(sampleTimer, 62, true, 0); // 1/16000Hz = 62.5us
-  //   Serial.println("playing msgFile");
-  // }
-  // else
-  // {
-  //   Serial.println("msgFile not available");
-  // }
+  else
+  {
+    Serial.println("msgFile not available");
+  }
 }
