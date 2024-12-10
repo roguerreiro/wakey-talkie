@@ -43,10 +43,6 @@ bool receivePacket()
    if (radio.available()) 
    {
     uint8_t bytes = radio.getPayloadSize();
-    Serial.print("payload of: ");
-    Serial.println(bytes, DEC);
-    // Serial.println("radio.available() return true.");
-    // char packet[32] = "";
     radio.read(&packet, sizeof(packet));
     radio.stopListening();
     Serial.print("Message received: ");
@@ -82,14 +78,14 @@ void processPacket()
           break;
       case MSG_PACKET:
           Serial.println("MSG_PACKET");
-          if(!msgFileOpen)
+          if(!msgFileCreated)
           {
-            openMsgFile();
+            createMsgFile();
             addToMsgFile((uint8_t *)&packet[1], 31);
           }
           else
           {
-            Serial.println("write to already opened msgFile.");
+            addToMsgFile((uint8_t *)&packet[1], 31);
           }
           break;
       case MSG_COMPLETE:

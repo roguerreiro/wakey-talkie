@@ -5,10 +5,13 @@
 #include <FS.h>
 
 extern File msgFile;
-extern bool msgFileOpen;
+extern bool msgFileCreated;
+extern bool msgFileOpened;
 extern uint16_t expireTime;
 
-void openMsgFile();
+void listFiles();
+
+void createMsgFile();
 void closeMsgFile();
 void addToMsgFile(uint8_t *packet, int packet_len);
 

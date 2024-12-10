@@ -9,6 +9,7 @@
 #include "PlayAudio.h"
 #include "Alarm.h"
 #include "WakeyComm.h"
+#include "MsgFile.h"
 
 /*
  * TODO fix stopping starting again.
@@ -159,6 +160,8 @@ void setup()
     return;
   }
 
+  listFiles();
+
   playing_buf = (char *)malloc(BUFFER_SIZE);
   filling_buf = (char *)malloc(BUFFER_SIZE);
 
@@ -217,19 +220,19 @@ void loop()
       }
       case PLAYING_MSG:
       {
-          if (SPIFFS.exists("/msg.bin")) {
-              Serial.println("File /msg.bin exists!");
-          } else {
-              Serial.println("File /msg.bin does not exist!");
-          }
-          if(msgFile.available())
-          {
-            Serial.println("msgFile available");
-          }
-          else
-          {
-            Serial.println("msgFile not available");
-          }
+//          if (SPIFFS.exists("/msg.bin")) {
+//              Serial.println("File /msg.bin exists!");
+//          } else {
+//              Serial.println("File /msg.bin does not exist!");
+//          }
+//          if(msgFile.available())
+//          {
+//            Serial.println("msgFile available");
+//          }
+//          else
+//          {
+//            Serial.println("msgFile not available");
+//          }
           // NOTE: co0uld have to do with seek?
         fillBuffer(msgFile);
         break;
