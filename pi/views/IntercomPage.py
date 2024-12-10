@@ -4,6 +4,8 @@ from comm.Peripheral import Peripheral
 from comm.audio import AudioRecorder
 import threading
 
+AUDIO_PATH = "/home/pi/wakey-talkie/audio/recorded_audio.wav"
+
 class IntercomPage(tk.Frame):
     def __init__(self, parent, controller):
         tk.Frame.__init__(self, parent, bg="white")
@@ -12,7 +14,7 @@ class IntercomPage(tk.Frame):
         self.controller = controller
         self.peripherals = {}
         self.checkbox_vars = {}
-        self.audio_recorder = AudioRecorder()  # Audio recorder instance
+        self.audio_recorder = AudioRecorder(AUDIO_PATH)  # Audio recorder instance
 
         # Create a paned window
         self.pane = tk.PanedWindow(self, orient=tk.VERTICAL)
@@ -114,7 +116,7 @@ class IntercomPage(tk.Frame):
             self.update_idletasks()
 
             # Send audio file to each selected peripheral
-            Peripheral.send_audio_file(selected_peripherals)
+            Peripheral.send_audio_file(selected_peripherals, AUDIO_PATH)
 
             self.status_label.config(text="Audio sent successfully.", fg="green")
         except Exception as e:
