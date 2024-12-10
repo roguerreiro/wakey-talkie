@@ -173,9 +173,8 @@ void setup()
   rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
-  playingState = PLAYING_ALARM;
   sampleTimer = timerBegin(1000000); 
-  triggerAlarm(alarmFiles[0], 3, sampleTimer);
+  triggerAlarm(alarmFiles[0], 3);
 }
 
 void loop() 
@@ -202,7 +201,7 @@ void loop()
         Serial.println("alarm - wake up!");
         playingState = PLAYING_ALARM;
         sampleTimer = timerBegin(1000000);
-        triggerAlarm(alarmFiles[0], 6, sampleTimer);
+        triggerAlarm(alarmFiles[0], 6);
       }
     }
     secondFlag = false;
@@ -217,14 +216,14 @@ void loop()
       case PLAYING_ALARM:
       {
         Serial.println("FillBuffer from alarmFile");
-        fillBuffer(alarmFile, sampleTimer);
+        fillBuffer(alarmFile);
         break;
       }
       case PLAYING_MSG:
       {
         Serial.println("FillBuffer from msgFile!");
         if(!msgFile) Serial.println("msgFile is NULL.");
-        fillBuffer(msgFile, sampleTimer);
+        fillBuffer(msgFile);
         break;
       }
       default:
@@ -234,13 +233,13 @@ void loop()
   }
   else
   {
-    Serial.print("Filling buf size not 0 but: ");
-    Serial.println(filling_buf_size, DEC);
+//    Serial.print("Filling buf size not 0 but: ");
+//    Serial.println(filling_buf_size, DEC);
   }
   if(stopFlag)
   {
     playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
-    stopAlarm(sampleTimer);
+    stopAlarm();
     stopFlag = false;
   }
   if(receivePacket())

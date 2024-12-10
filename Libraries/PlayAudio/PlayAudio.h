@@ -27,7 +27,7 @@ extern volatile int playing_idx;
 
 void IRAM_ATTR isr_play_sample();
 void IRAM_ATTR switchBuffers();
-void fillBuffer(File file, hw_timer_t *timer);
+void fillBuffer(File file);
 void playMsg(hw_timer_t *timer);
 
 #endif // PLAY_AUDIO_H

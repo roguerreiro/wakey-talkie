@@ -13,18 +13,22 @@ extern hw_timer_t *sampleTimer;
 
 void IRAM_ATTR isr_play_sample()
 {
-  dacWrite(DAC_OUT, playing_buf[playing_idx]);
-  playing_idx++;
-  if(playing_idx == playing_buf_size) 
-  {
-    switchBuffers();
-  }
+  // if(playing_buf_size) // i don't think we should need this and it makes me nervous that i had to add it.
+  // {
+    dacWrite(DAC_OUT, playing_buf[playing_idx]);
+    playing_idx++;
+    if(playing_idx == playing_buf_size)  
+    {
+      switchBuffers();
+    }
+  // }
+
 }
 
 void IRAM_ATTR switchBuffers()
 {
   digitalWrite(TIMING_PIN, HIGH);
-  // noInterrupts();
+  noInterrupts();
   // Serial.println("Switch buffers.");
   playing_buf_size = filling_buf_size;
   filling_buf_size = 0;
@@ -33,29 +37,41 @@ void IRAM_ATTR switchBuffers()
   playing_buf = tmp;
   playing_idx = 0;
   digitalWrite(TIMING_PIN, LOW);
-  // interrupts();
+  interrupts();
 }
 
-void fillBuffer(File file, hw_timer_t *timer)
+void fillBuffer(File file)
 {
   // Serial.println("fillBuffer");
   if(file.available())
   {
     filling_buf_size = file.readBytes(filling_buf, BUFFER_SIZE); 
     Serial.println(filling_buf_size, DEC);
+
+    if(filling_buf_size == 0)
+    {
+      Serial.println("JUST READ IN ZERO BYTES TO FILL BUFFER.");
+    }
   }
   else
   {
-    // Serial.println("else");
+
+    Serial.println("-------------------------else--------------------------");
+    Serial.print("playing_idx: ");
+    Serial.println(playing_idx, DEC);
+    Serial.print("playing_buf_size: ");
+    Serial.println(playing_buf_size, DEC); // this is being 0 with a nonzero index
+
+    // playing_buf_size = 0;
     if(playingState == PLAYING_ALARM) // MIGHT CHANGE TO 1 or whatever instead
     {
-      repeatAlarm(timer);
+      repeatAlarm();
     }
     else if(playingState == PLAYING_MSG)
     {
       playingState = NOT_PLAYING;
       Serial.println("else playing_msg > closing msgFile");
-      timerDetachInterrupt(timer);
+      timerDetachInterrupt(sampleTimer);
       msgFile.close();
       filling_buf_size = 0;
     }
@@ -84,7 +100,7 @@ void playMsg(hw_timer_t *timer) // probably doesn't need to take in a timer at a
 
   if(msgFile.available())
   {
-    fillBuffer(msgFile, timer);
+    fillBuffer(msgFile);
     switchBuffers();
     sampleTimer = timerBegin(1000000);
     timerAttachInterrupt(sampleTimer, &isr_play_sample);
