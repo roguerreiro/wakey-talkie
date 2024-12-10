@@ -1,7 +1,7 @@
 from pyrf24 import RF24, RF24_PA_HIGH
 import RPi.GPIO as GPIO
 import time
-from files import read_data, save_data
+from comm.files import read_data, save_data
 import wave
 from enum import Enum
 PERIPHERAL_ADDRESS = 0xF0F0F0F0E1

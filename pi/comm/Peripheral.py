@@ -1,6 +1,6 @@
-from files import read_data, save_data
-from rxtx import setup, send_message, Opcode
-from audio import AudioRecorder
+from comm.files import read_data, save_data
+from comm.rxtx import setup, send_message, Opcode
+from comm.audio import AudioRecorder
 import wave
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
