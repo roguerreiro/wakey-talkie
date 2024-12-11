@@ -6,6 +6,7 @@
 #include <Arduino.h>
 #include <FS.h>
 #include <SPIFFS.h>
+#include "Sensing.h"
 #include "PlayAudio.h"
 #include "Alarm.h"
 #include "WakeyComm.h"
@@ -180,6 +181,9 @@ void setup()
 
   //Rx setup
   rxSetup();
+
+  //sensor setup
+  senseSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
 //  playingState = PLAYING_ALARM;
