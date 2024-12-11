@@ -10,11 +10,10 @@ char packet[32] = "";
 
 void rxSetup() // maybe have this try again if it fails rather than while(1)
 {
-  // RX/TX
   customSPI.begin(CLK, MISO, MOSI, CSN); // Ensure CSN is used here
   if (!radio.begin(&customSPI)) {
     Serial.println("Failed to initialize radio"); // maybe redo?
-    //  while (1); // Halt if initialization fails
+    return;
   }
   else
   {
@@ -94,7 +93,7 @@ void processPacket()
           {
             Serial.println("Closing msgFile");
             closeMsgFile();
-            if(0) // TODO: fix
+            if(isPersonActive()) // TODO: fix
             {
               // person is here > play message immediately
               playingState = PLAYING_MSG;

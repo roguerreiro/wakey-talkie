@@ -7,6 +7,7 @@
 
 #include "Alarm.h"
 #include "MsgFile.h"
+#include "Sensing.h"
 
 #define CE 15
 #define CSN 2

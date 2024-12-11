@@ -51,7 +51,6 @@ volatile bool msgFlag = false;
 #define STOP_BTN 35 // NEEDS TO BE SET, THIS IS TEMP
 #define MSG_BTN 21 
 
-
 void send_message();
 
 PxMATRIX display(32, 32, P_LAT, P_OE, P_A, P_B, P_C, P_D);
@@ -202,8 +201,11 @@ void loop()
     {
       display.setTextColor(randomColor()); // temporary, might take out
       display.clearDisplay();
-//      formatTime();
       display.print(the_time);
+    }
+    if(msgWaiting)
+    {
+      display.drawRect(0,0, 32, 32, 0xFFFF);
     }
     // TODO: also check expiration date stuff
     
@@ -217,7 +219,7 @@ void loop()
         Serial.println("alarm - wake up!");
         playingState = PLAYING_ALARM;
         sampleTimer = timerBegin(1000000);
-        triggerAlarm(alarmFiles[0], 6, sampleTimer);
+        triggerAlarm(alarmFiles[0], 2, sampleTimer); // todo change to infinite
       }
     }
     secondFlag = false;
@@ -233,20 +235,6 @@ void loop()
       }
       case PLAYING_MSG:
       {
-//          if (SPIFFS.exists("/msg.bin")) {i
-//              Serial.println("File /msg.bin exists!");
-//          } else {
-//              Serial.println("File /msg.bin does not exist!");
-//          }
-//          if(msgFile.available())
-//          {
-//            Serial.println("msgFile available");
-//          }
-//          else
-//          {
-//            Serial.println("msgFile not available");
-//          }
-          // NOTE: co0uld have to do with seek?
         fillBuffer(msgFile);
         break;
       }
@@ -264,16 +252,15 @@ void loop()
   {
     if(msgWaiting)
     {
+      setCursorFromTime();
+      display.clearDisplay();
+      display.print(the_time);
       Serial.println("Message playback initiated");
       msgWaiting = false;
       playingState = PLAYING_MSG;
       playMsg();
     }
     msgFlag = false;
-  }
-  if(msgWaiting)
-  {
-    Serial.println("message is waiting!!!!!!!!");
   }
   if(receivePacket())
   {
@@ -315,7 +302,12 @@ bool formatTime()
     sprintf(the_time, "%d:%d", hour, minute);
   }
 
-  // adjust cursor based on hour digits
+  setCursorFromTime();
+  return ret;
+}
+
+void setCursorFromTime()
+{
   if(hour > 9)
   {
     display.setCursor(1 , 12);
@@ -324,9 +316,7 @@ bool formatTime()
   {
     display.setCursor(5 , 12);
   }
-  return ret;
 }
-
 
 
 void send_message(){
