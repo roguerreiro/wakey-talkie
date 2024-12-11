@@ -3,6 +3,11 @@ from tkinter import ttk
 from comm.rxtx import set_alarm
 from comm.Peripheral import Peripheral
 
+SOUND_IDS = {
+    "Sound 1": 0,
+    "Sound 2": 1,
+    "Sound 3": 2
+}
 
 class AlarmPage(tk.Frame):
     def __init__(self, parent, controller):
@@ -122,7 +127,7 @@ class AlarmPage(tk.Frame):
         hour = hour_var.get()
         minute = minute_var.get()
         am_pm = am_pm_var.get()
-        alarm_type = alarm_type_var.get()
+        alarm_type = SOUND_IDS[alarm_type_var.get()]
 
         print(f"Peripheral {peripheral_id} - Time Set: {hour}:{minute} {am_pm}, Sound: {alarm_type}")
 
