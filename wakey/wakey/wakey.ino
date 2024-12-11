@@ -36,6 +36,7 @@ bool am;
 volatile bool displayFlag = false;
 volatile bool secondFlag = false;
 volatile bool stopFlag = false;
+volatile bool msgFlag = false;
 
 // LED Matrix Display Pins
 #define P_LAT 12
@@ -47,7 +48,8 @@ volatile bool stopFlag = false;
 #define RANDOM_PIN 34
 
 // #define TIMING_PIN 5
-#define STOP_BTN 21
+#define STOP_BTN 35 // NEEDS TO BE SET, THIS IS TEMP
+#define MSG_BTN 21 
 
 
 void send_message();
@@ -75,6 +77,10 @@ uint16_t randomColor()
   return random(65535);
 }
 
+void IRAM_ATTR isr_msg_pressed()
+{
+  msgFlag = true;
+}
 void IRAM_ATTR isr_stop_pressed()
 {
   stopFlag = true;
@@ -94,7 +100,9 @@ void setup()
 {
   Serial.begin(115200);
 
-  // Enable button interrupt
+  // Enable button interrupts
+  pinMode(MSG_BTN, INPUT);
+  attachInterrupt(MSG_BTN, isr_msg_pressed, RISING);
   pinMode(STOP_BTN, INPUT);
   attachInterrupt(STOP_BTN, isr_stop_pressed, RISING);
 
@@ -175,9 +183,9 @@ void setup()
   rxSetup();
 //  Serial.print("After rxSetup(), isChipConnected()? ");
 //  Serial.println(radio.isChipConnected());
-  playingState = PLAYING_ALARM;
-  sampleTimer = timerBegin(1000000); 
-  triggerAlarm(alarmFiles[0], 3, sampleTimer);
+//  playingState = PLAYING_ALARM;
+//  sampleTimer = timerBegin(1000000); 
+//  triggerAlarm(alarmFiles[0], 3, sampleTimer);
 }
 
 void loop() 
@@ -246,6 +254,21 @@ void loop()
     playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
     stopAlarm();
     stopFlag = false;
+  }
+  if(msgFlag)
+  {
+    if(msgWaiting)
+    {
+      Serial.println("Message playback initiated");
+      msgWaiting = false;
+      playingState = PLAYING_MSG;
+      playMsg();
+    }
+    msgFlag = false;
+  }
+  if(msgWaiting)
+  {
+    Serial.println("message is waiting!!!!!!!!");
   }
   if(receivePacket())
   {

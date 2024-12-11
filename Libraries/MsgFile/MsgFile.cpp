@@ -3,6 +3,7 @@
 // File msgFile;
 bool msgFileCreated = false;
 bool msgFileOpened = false;
+bool msgWaiting = false;
 uint16_t expireTime = 0;
 
 void createMsgFile()
