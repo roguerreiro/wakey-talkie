@@ -48,8 +48,8 @@ volatile bool msgFlag = false;
 #define RANDOM_PIN 34
 
 // #define TIMING_PIN 5
-#define STOP_BTN 35 // NEEDS TO BE SET, THIS IS TEMP
-#define MSG_BTN 21 
+#define STOP_BTN 21 // NEEDS TO BE SET, THIS IS TEMP
+#define MSG_BTN 4 
 
 void send_message();
 
@@ -219,7 +219,7 @@ void loop()
         Serial.println("alarm - wake up!");
         playingState = PLAYING_ALARM;
         sampleTimer = timerBegin(1000000);
-        triggerAlarm(alarmFiles[0], 2, sampleTimer); // todo change to infinite
+        triggerAlarm(alarmFiles[0], 99, sampleTimer); // todo change to infinite
       }
     }
     secondFlag = false;
@@ -242,7 +242,7 @@ void loop()
       break;
     }
   }
-  if(stopFlag)
+  if(stopFlag) // have this check for state!!!!!!!!
   {
     playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
     stopAlarm();
