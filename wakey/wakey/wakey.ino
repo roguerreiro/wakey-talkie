@@ -64,7 +64,7 @@ hw_timer_t *sampleTimer = NULL;
 
 PlayingState playingState = NOT_PLAYING;
 
-void formatTime();
+bool formatTime();
 
 char *playing_buf = nullptr;        // Define and initialize buffers
 char *filling_buf = nullptr;
@@ -157,7 +157,7 @@ void setup()
   }
   second = timeinfo.tm_sec;
 
-//  formatTime();
+  formatTime();
   display.clearDisplay(); 
   display.print(the_time);
 
@@ -198,10 +198,15 @@ void loop()
   if(secondFlag)
   {
     second++;
+    if(formatTime())
+    {
+      display.setTextColor(randomColor()); // temporary, might take out
+      display.clearDisplay();
+//      formatTime();
+      display.print(the_time);
+    }
     // TODO: also check expiration date stuff
-    display.clearDisplay();
-    formatTime();
-    display.print(the_time);
+    
     if(playingState != 1) // might not need this check anymore 
     {
       if(checkAlarmTime(hour, minute, am))
@@ -276,13 +281,15 @@ void loop()
   }
 }
 
-
-void formatTime()
+/* returns true if time changed */
+bool formatTime()
 {
+  bool ret = false;
   if(second == 60)
   {
     second = 0;
     minute++;
+    ret = true;
     if(minute == 60)
     {
       minute = 0;
@@ -301,22 +308,23 @@ void formatTime()
   // add leading zero for single digit minutes
   if(minute < 10)
   {
-    sprintf(the_time, "%d:0%d:%d", hour, minute, second); // TODO: remove seconds
+    sprintf(the_time, "%d:0%d", hour, minute); // TODO: remove seconds
   }
   else
   {
-    sprintf(the_time, "%d:%d:%d", hour, minute, second);
+    sprintf(the_time, "%d:%d", hour, minute);
   }
 
   // adjust cursor based on hour digits
   if(hour > 9)
   {
-    display.setCursor(1 , 10);
+    display.setCursor(1 , 12);
   }
   else
   {
-    display.setCursor(5 , 10);
+    display.setCursor(5 , 12);
   }
+  return ret;
 }
 
 
