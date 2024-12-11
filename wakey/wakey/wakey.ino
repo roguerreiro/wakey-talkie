@@ -38,6 +38,7 @@ volatile bool displayFlag = false;
 volatile bool secondFlag = false;
 volatile bool stopFlag = false;
 volatile bool msgFlag = false;
+volatile bool senseFlag = false;
 
 // LED Matrix Display Pins
 #define P_LAT 12
@@ -94,6 +95,7 @@ void IRAM_ATTR isr_display_updater()
 void IRAM_ATTR isr_second_passed()
 {
   secondFlag = true;
+  senseFlag = true;
 }
 
 void setup() 
@@ -228,6 +230,11 @@ void loop()
     }
     secondFlag = false;
   }
+
+  if (senseFlag){
+    updateSenseState(isActive(), isAvailable());
+  }
+  
   if(filling_buf_size == 0)
   {
     switch(playingState)

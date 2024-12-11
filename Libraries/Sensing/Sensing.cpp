@@ -7,6 +7,10 @@ SleepBreathingRadar radar;
 const uint8_t cuc_CRCHi[256] = {/*...*/}; // Add CRC High Byte Table
 const uint8_t cuc_CRCLo[256] = {/*...*/}; // Add CRC Low Byte Table
 
+// Define activeHistory and availHistory
+uint32_t activeHistory = 0;   // Initialize activeHistory to 0
+uint32_t availHistory = 0;    // Initialize availHistory to 0
+
 // CRC16 Calculation
 uint16_t calculateCRC16(uint8_t *data, uint16_t length) {
   uint8_t crcHi = 0xFF, crcLo = 0xFF;
@@ -57,24 +61,60 @@ void processRadarFrame(const uint8_t radarDataBuffer[]) {
 
 bool isPersonActive(){
 
-    int act_count = 0;
-    int aval_count = 0;
+    uint8_t act_count = 0;
+    uint8_t avail_count = 0;
 
-    for (int i = 0; i++; i<SENSE_TIMES){
-        if(digitalRead(ACTIVITY_PIN)){
-            act_count ++;
-        }
-
-        if (digitalRead(AVAIL_PIN)){
-            aval_count++;
-        }
+    while (activeHistory){
+        act_count += activeHistory & 1;
+        activeHistory >>= 1;
     }
 
-    if ((act_count>SENSE_THRESHOLD) && (aval_count>SENSE_THRESHOLD)){
+    while (availHistory){
+        avail_count += availHistory & 1;
+        availHistory >>= 1;
+    }
+
+    if ((avail_count>SENSE_THRESHOLD) && (act_count>SENSE_THRESHOLD)){
         return true;
     }
-
     return false;
+}
+
+void updateActiveState(bool activeState){
+     
+    if (activeState){
+        activeHistory |= 1;//set the LSB if the state is active
+    }
+    else{
+        activeHistory &= ~1;
+    }
+
+    activeHistory &= 0xFFFFFFFF;
+}
+
+void updateAvailState(bool availState) {
+    
+    if (availState){
+        availHistory |= 1;//set the LSB if the state is active
+    }
+    else{
+        availHistory &= ~1;
+    }
+
+    availHistory &= 0xFFFFFFFF;
+}
+
+void updateSenseState(bool activeState, bool availState){
+    updateActiveState(activeState);
+    updateAvailState(availState);
+}
+
+bool isActive(){
+    return digitalRead(ACTIVITY_PIN);
+}
+
+bool isAvailable(){
+    return digitalRead(AVAIL_PIN);
 }
 
 void getData() {

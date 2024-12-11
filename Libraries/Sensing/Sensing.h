@@ -18,13 +18,20 @@ extern SleepBreathingRadar radar;   // Declare radar object
 
 extern const uint8_t cuc_CRCHi[256]; // Declare CRC High Byte Table
 extern const uint8_t cuc_CRCLo[256]; // Declare CRC Low Byte Table
+extern uint32_t activeHistory;
+extern uint32_t availHistory;
 
 // Function declarations
 void senseSetup();
 bool isPersonActive();
+bool isActive();
+bool isAvailable();
+void updateSenseState(bool activeState, bool availState);
+void updateAvailState(bool availState);
+void updateActiveState(bool activeState);
 
 #define FRAME_SIZE 20
 #define SENSE_TIMES 5
-#define SENSE_THRESHOLD 2
+#define SENSE_THRESHOLD 15
 
 #endif // SENSING_H
