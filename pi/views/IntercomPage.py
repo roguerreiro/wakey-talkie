@@ -144,9 +144,6 @@ class IntercomPage(tk.Frame):
             "AM": self.hour_var.get() == "AM"
         }
 
-        # Log expiration time for debugging
-        print(f"Expiration Time: {expiration_time}")
-
         # Update UI to show recording status
         self.status_label.config(text="Press button to begin...", fg="blue")
         self.update_idletasks()

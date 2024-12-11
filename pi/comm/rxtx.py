@@ -44,6 +44,8 @@ def send_message(address, opcode, message: bytes, tries=1):
     if len(message) < 31:
         payload[1 + len(message):] = b'\x00' * (31 - len(message))
 
+    print(payload)
+
     # Send the payload
     radio.stopListening()
     radio.openWritingPipe(address)
