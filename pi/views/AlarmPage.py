@@ -20,10 +20,6 @@ class AlarmPage(tk.Frame):
         self.alarm_frames = {}
         self.main_frame = None
 
-        self.init_ui()
-
-    def init_ui(self):
-        """Initializes the UI components."""
         pane = tk.PanedWindow(self, orient=tk.VERTICAL)
         pane.pack(fill="both", expand=True)
 

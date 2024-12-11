@@ -49,7 +49,7 @@ class Peripheral(object):
         return available
     
     @staticmethod
-    def send_audio_file(peripherals:dict, filename=AUDIO_PATH, chunk_size=31):
+    def send_audio_file(peripherals:dict, expiration_time:dict, filename=AUDIO_PATH, chunk_size=31):
         peripherals_copy = peripherals.copy()
         try:
             with wave.open(filename, 'rb') as wav_file:
@@ -78,9 +78,22 @@ class Peripheral(object):
                         success = send_message(peripheral.address, Opcode.AUDIO_CHUNK.value, frames, tries=1)
                         if not success: print(f"failed to send chunk to peripheral {id}")
 
+                hour_bits = expiration_time["hour"] & 0b1111
+                minute_bits = expiration_time["minute"] & 0b00111111
+                am = expiration_time["AM"]
+                message = (hour_bits << 12) | (minute_bits << 4) | (am << 3)
+                print("{:16b}".format(message))
 
+                # Split the 16-bit message into two bytes
+                high_byte = (message >> 8) & 0xFF  # Extract the most significant 8 bits
+                low_byte = message & 0xFF          # Extract the least significant 8 bits
+
+                # Create a bytes object
+                buffer = bytes([high_byte, low_byte])
+                
+                
                 for id, peripheral in peripherals_copy.items():
-                    success = send_message(peripheral.address, Opcode.AUDIO_FINISHED.value, "".encode('utf-8'), tries=5)
+                    success = send_message(peripheral.address, Opcode.AUDIO_FINISHED.value, buffer, tries=5)
                 
         
         except Exception as e:

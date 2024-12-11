@@ -46,9 +46,48 @@ class IntercomPage(tk.Frame):
         )
         self.status_label.pack(expand=True, pady=20)
 
+        # Time selection widgets
+        self.time_frame = tk.Frame(self.main_frame, bg="white")
+        self.time_frame.pack(pady=10)
+
+        self.create_time_selection()
 
         # Initial refresh
         self.refresh_peripherals()
+
+    def create_time_selection(self):
+        """Create time selection widgets for expiration time."""
+        tk.Label(
+            self.time_frame, text="Message Expiration Time:", font=("Helvetica", 14), bg="white"
+        ).pack(pady=5)
+
+        # Hour spinbox
+        self.hour_var = tk.StringVar(value="12")
+        hour_spinbox = tk.Spinbox(
+            self.time_frame, from_=1, to=12, wrap=True, textvariable=self.hour_var,
+            font=("Helvetica", 16), width=2, justify="center", state="readonly"
+        )
+        hour_spinbox.pack(side="left", padx=5)
+
+        # Colon separator
+        colon_label = tk.Label(self.time_frame, text=":", font=("Helvetica", 16), bg="white")
+        colon_label.pack(side="left")
+
+        # Minute spinbox
+        self.minute_var = tk.StringVar(value="00")
+        minute_spinbox = tk.Spinbox(
+            self.time_frame, from_=0, to=59, wrap=True, textvariable=self.minute_var,
+            font=("Helvetica", 16), width=2, justify="center", state="readonly"
+        )
+        minute_spinbox.pack(side="left", padx=5)
+
+        # AM/PM dropdown
+        self.am_pm_var = tk.StringVar(value="AM")
+        am_pm_menu = ttk.OptionMenu(
+            self.time_frame, self.am_pm_var, "AM", "AM", "PM"
+        )
+        am_pm_menu.config(width=3)
+        am_pm_menu.pack(side="left", padx=5)
 
     def refresh_peripherals(self):
         """Refresh the list of available peripherals."""
@@ -57,7 +96,7 @@ class IntercomPage(tk.Frame):
 
         # Clear checkboxes and buttons from the main frame
         for widget in self.main_frame.winfo_children():
-            if widget != self.status_label:
+            if widget != self.status_label and widget != self.time_frame:
                 widget.destroy()
 
         if not self.peripherals:
@@ -75,16 +114,15 @@ class IntercomPage(tk.Frame):
                 var = tk.BooleanVar()
                 self.checkbox_vars[id] = var
                 checkbox = tk.Checkbutton(
-                    self.main_frame, text=f"Peripheral {id}", variable=var, font=("Arial", 14), bg="white"
+                    self.main_frame, text=f"Peripheral {id}", variable=var, font=("Arial", 18), bg="white"
                 )
-                checkbox.pack(anchor="w", padx=20, pady=5)
+                checkbox.pack(anchor="w", padx=20, pady=10)
 
             # Add send button
             send_button = ttk.Button(
                 self.main_frame, text="Record and Send Audio", command=self.start_record_and_send
             )
             send_button.pack(pady=20)
-
 
     def start_record_and_send(self):
         """Start recording and then send the audio."""
@@ -97,6 +135,18 @@ class IntercomPage(tk.Frame):
             self.status_label.config(text="No peripherals selected.", fg="red")
             return
 
+        # Get selected expiration time
+        expiration_time = f"{self.hour_var.get()}:{self.minute_var.get()} {self.am_pm_var.get()}"
+        print(f"Sent expiration time: {expiration_time}")
+        expiration_time = {
+            "hour": int(self.hour_var.get()),
+            "minute": int(self.minute_var.get()),
+            "AM": self.hour_var.get() == "AM"
+        }
+
+        # Log expiration time for debugging
+        print(f"Expiration Time: {expiration_time}")
+
         # Update UI to show recording status
         self.status_label.config(text="Press button to begin...", fg="blue")
         self.update_idletasks()
@@ -104,9 +154,9 @@ class IntercomPage(tk.Frame):
         self.audio_recorder.enable_recording()
 
         # Use a thread to avoid blocking the UI
-        threading.Thread(target=self.record_and_send, args=(selected_peripherals,)).start()
+        threading.Thread(target=self.record_and_send, args=(selected_peripherals, expiration_time)).start()
 
-    def record_and_send(self, selected_peripherals):
+    def record_and_send(self, selected_peripherals, expiration_time):
         """Record the audio and send it to selected peripherals."""
         try:
             # Record audio
@@ -116,9 +166,8 @@ class IntercomPage(tk.Frame):
             self.update_idletasks()
 
             # Send audio file to each selected peripheral
-            Peripheral.send_audio_file(selected_peripherals, AUDIO_PATH)
+            Peripheral.send_audio_file(selected_peripherals, expiration_time, AUDIO_PATH)
 
             self.status_label.config(text="Audio sent successfully.", fg="green")
         except Exception as e:
             self.status_label.config(text=f"Error: {e}", fg="red")
-
