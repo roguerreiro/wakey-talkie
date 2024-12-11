@@ -19,8 +19,6 @@ portMUX_TYPE timerMux = portMUX_INITIALIZER_UNLOCKED;
 Ticker display_ticker;
 
 
-
-
 #endif
 // Pins for LED MATRIX
 

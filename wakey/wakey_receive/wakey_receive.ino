@@ -47,6 +47,7 @@ volatile bool stopFlag = false;
 #define MOSI 23
 #define MISO 19
 
+//custom SPI for communication module
 SPIClass customSPI (VSPI);
 RF24 radio(CE, CSN);
 
@@ -208,6 +209,7 @@ void setup()
   Serial.println(radio.isChipConnected());
 
   triggerAlarm("/wakeywakey.wav", 3);
+
 }
 
 void loop() 
