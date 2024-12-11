@@ -79,8 +79,8 @@ class AlarmPage(tk.Frame):
         tk.Label(frame, text=f"Peripheral {peripheral_id}", font=("Helvetica", 16), bg="white").pack()
 
         # Alarm Type Dropdown
-        alarm_type_var = tk.StringVar(value="Type 1")
-        alarm_type_menu = ttk.OptionMenu(frame, alarm_type_var, "Type 1", "Type 1", "Type 2", "Type 3")
+        alarm_type_var = tk.StringVar(value="Sound 1")
+        alarm_type_menu = ttk.OptionMenu(frame, alarm_type_var, "Sound 1", "Sound 1", "Sound 2", "Sound 3")
         alarm_type_menu.pack(pady=5)
 
         # Hour and Minute Spinboxes
@@ -124,6 +124,6 @@ class AlarmPage(tk.Frame):
         am_pm = am_pm_var.get()
         alarm_type = alarm_type_var.get()
 
-        print(f"Peripheral {peripheral_id} - Time Set: {hour}:{minute} {am_pm}, Type: {alarm_type}")
+        print(f"Peripheral {peripheral_id} - Time Set: {hour}:{minute} {am_pm}, Sound: {alarm_type}")
 
-        self.peripherals[peripheral_id].set_alarm(hour, minute, am_pm)
+        self.peripherals[peripheral_id].set_alarm(hour, minute, am_pm, alarm_type)

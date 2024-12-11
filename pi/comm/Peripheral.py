@@ -12,11 +12,12 @@ class Peripheral(object):
         self.id = id
         self.address = data["peripherals"][id]["address"]
 
-    def set_alarm(self, hour, minute, am_pm):
+    def set_alarm(self, hour, minute, am_pm, sound=0):
         hour_bits = int(hour) & 0b1111
         minute_bits = int(minute) & 0b00111111
         am = am_pm == "AM"
-        message = (hour_bits << 12) | (minute_bits << 4) | (am << 3)
+        sound_bits = sound & 0b0111
+        message = (hour_bits << 12) | (minute_bits << 4) | (am << 3) | sound_bits
         print("{:16b}".format(message))
 
         # Split the 16-bit message into two bytes
