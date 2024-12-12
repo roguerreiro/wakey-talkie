@@ -124,20 +124,6 @@ class AlarmPage(tk.Frame):
         frame.vars = {"hour": hour_var, "minute": minute_var, "am_pm": am_pm_var, "type": alarm_type_var}
         return frame
 
-
-        # Submit Button
-        submit_button = tk.Button(
-            frame,
-            text="Set Alarm",
-            font=("Helvetica", 12),
-            command=lambda: self.submit_time(peripheral_id, hour_var, minute_var, am_pm_var, alarm_type_var),
-        )
-        submit_button.pack(pady=10)
-
-        # Store references to variables for later use
-        frame.vars = {"hour": hour_var, "minute": minute_var, "am_pm": am_pm_var, "type": alarm_type_var}
-        return frame
-
     def submit_time(self, peripheral_id, hour_var, minute_var, am_pm_var, alarm_type_var):
         """Handles submission of alarm settings for a specific peripheral."""
         hour = hour_var.get()

@@ -141,7 +141,7 @@ class IntercomPage(tk.Frame):
         expiration_time = {
             "hour": int(self.hour_var.get()),
             "minute": int(self.minute_var.get()),
-            "AM": self.hour_var.get() == "AM"
+            "AM": self.am_pm_var.get() == "AM"
         }
 
         # Update UI to show recording status
@@ -150,21 +150,32 @@ class IntercomPage(tk.Frame):
 
         self.audio_recorder.enable_recording()
 
-        # Use a thread to avoid blocking the UI
-        threading.Thread(target=self.record_and_send, args=(selected_peripherals, expiration_time)).start()
+        # Disable the send button while recording/sending
+        send_button = self.main_frame.winfo_children()[-1]
+        send_button.config(state="disabled")
 
-    def record_and_send(self, selected_peripherals, expiration_time):
+        # Use a thread to avoid blocking the UI
+        threading.Thread(target=self.record_and_send, args=(selected_peripherals, expiration_time, send_button)).start()
+
+    def record_and_send(self, selected_peripherals, expiration_time, send_button):
         """Record the audio and send it to selected peripherals."""
         try:
             # Record audio
             self.status_label.config(text="Recording...", fg="black")
+            self.update_idletasks()
             self.audio_recorder.record_and_save_audio()
+
+            # Update UI for sending status
             self.status_label.config(text="Recording complete. Sending audio...", fg="blue")
             self.update_idletasks()
 
             # Send audio file to each selected peripheral
             Peripheral.send_audio_file(selected_peripherals, expiration_time, AUDIO_PATH)
 
+            # Update UI for success
             self.status_label.config(text="Audio sent successfully.", fg="green")
         except Exception as e:
             self.status_label.config(text=f"Error: {e}", fg="red")
+        finally:
+            # Re-enable the send button
+            send_button.config(state="normal")
