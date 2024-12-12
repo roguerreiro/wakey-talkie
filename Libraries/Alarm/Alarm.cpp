@@ -63,6 +63,7 @@ void repeatAlarm()
 void stopAlarm()
 {
   timerDetachInterrupt(sampleTimer);
+  timerEnd(sampleTimer);
   alarmFile.close();
   repeatCount = 0;
   filling_buf_size = -1;

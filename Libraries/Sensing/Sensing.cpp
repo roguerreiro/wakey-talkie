@@ -82,26 +82,56 @@ bool isPersonActive(){
 
 void updateActiveState(bool activeState){
      
+    // Serial.println("called update active status: ");
+    // Serial.print("currentAct: ");
+    // Serial.println(activeState);
+
+    activeHistory = activeHistory <<  1;
+
     if (activeState){
         activeHistory |= 1;//set the LSB if the state is active
+        // Serial.println("active state is 1: ");
+        // Serial.print("activeHistory after shifting: ");
+        // Serial.println(activeHistory, BIN);
     }
     else{
         activeHistory &= ~1;
+        // Serial.println("active state is 0 ");
+        // Serial.print("activeHistory after shifting: ");
+        // Serial.println(activeHistory, BIN);
     }
 
     activeHistory &= 0xFFFFFFFF;
+    // Serial.print("activeHistory right before the function: ");
+    // Serial.println(activeHistory, BIN);
 }
 
 void updateAvailState(bool availState) {
+
+    // Serial.println("called update avail status");
+    // Serial.print("currentAct: ");
+    // Serial.println(availState);
+
+    availHistory = availHistory<< 1;
+
     
     if (availState){
+
         availHistory |= 1;//set the LSB if the state is active
+        // Serial.println("available state is 1");
+        // Serial.print("availableHistory after shifting");
+        // Serial.println(availHistory, BIN);
     }
     else{
         availHistory &= ~1;
+        // Serial.println("available state is 0");
+        // Serial.print("availableHistory after shifting: ");
+        // Serial.println(availHistory, BIN);
     }
 
     availHistory &= 0xFFFFFFFF;
+    // Serial.print("availableHistory right before leving the function: ");
+    // Serial.println(availHistory, BIN);
 }
 
 void updateSenseState(bool activeState, bool availState){

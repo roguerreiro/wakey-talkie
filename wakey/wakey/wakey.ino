@@ -47,7 +47,7 @@ volatile bool senseFlag = false;
 #define P_C 26
 #define P_D 27
 #define P_OE 22
-#define RANDOM_PIN 34
+#define RANDOM_PIN 36
 
 // #define TIMING_PIN 5
 #define STOP_BTN 21 // NEEDS TO BE SET, THIS IS TEMP
@@ -231,8 +231,25 @@ void loop()
     secondFlag = false;
   }
 
-  if (senseFlag){
+  if (senseFlag)
+  {
+//    bool currentAvail = isAvailable();
+//    bool currentAct = isActive();
+//
+//    Serial.print("currentAvail: ");
+//    Serial.println(currentAvail);
+//    Serial.print("currentAct: ");
+//    Serial.println(currentAct);
+    
     updateSenseState(isActive(), isAvailable());
+    senseFlag = false;
+//    Serial.print("available state:");
+//    Serial.println(availHistory, BIN);
+//    Serial.print("active state: ");
+//    Serial.println(activeHistory, BIN);
+//    uint32_t random = 1024;
+//    Serial.print("testing: ");
+//    Serial.println(random, BIN);
   }
   
   if(filling_buf_size == 0)
@@ -253,11 +270,14 @@ void loop()
       break;
     }
   }
-  if(stopFlag) // have this check for state!!!!!!!!
+  if(stopFlag) 
   {
-    playingState = NOT_PLAYING; // means fillBuffer won't be called anymore
-    stopAlarm();
-    stopFlag = false;
+    if(playingState == PLAYING_ALARM)
+    {
+      playingState = NOT_PLAYING; 
+      stopAlarm();
+      stopFlag = false;
+    }
   }
   if(msgFlag)
   {

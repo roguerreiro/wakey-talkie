@@ -56,7 +56,7 @@ void fillBuffer(File file)
   }
   else if(playingState == PLAYING_ALARM)
   {
-    repeatAlarm();
+    alarmFile.seek(44);
   }
   else if(playingState == PLAYING_MSG)
   {
