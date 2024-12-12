@@ -66,11 +66,22 @@ class AlarmPage(tk.Frame):
             )
             no_devices_label.pack(expand=True, pady=20)  # Using pack since no other widgets will be added
         else:
-            # Create alarm frames for each peripheral
+            # Define number of columns
+            columns = 3
             for i, (id, peripheral) in enumerate(self.peripherals.items()):
                 frame = self.create_alarm_frame(self.main_frame, id)
-                frame.grid(row=i, column=0, pady=10, padx=10, sticky="ew")  # Use grid for peripherals
+                
+                # Compute row and column dynamically
+                row = i // columns
+                col = i % columns
+                
+                frame.grid(row=row, column=col, padx=10, pady=10, sticky="nsew")
                 self.alarm_frames[id] = frame
+
+            # Make the grid cells expand to fill the space
+            for col in range(columns):
+                self.main_frame.columnconfigure(col, weight=1)
+
 
 
     def create_alarm_frame(self, parent, peripheral_id):
