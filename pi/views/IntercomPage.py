@@ -124,72 +124,72 @@ class IntercomPage(tk.Frame):
             )
             send_button.pack(pady=20)
 
-def start_record_and_send(self):
-    """Start recording and then send the audio."""
-    selected_peripherals = {
-        id: self.peripherals[id]
-        for id, var in self.checkbox_vars.items() if var.get()
-    }
+    def start_record_and_send(self):
+        """Start recording and then send the audio."""
+        selected_peripherals = {
+            id: self.peripherals[id]
+            for id, var in self.checkbox_vars.items() if var.get()
+        }
 
-    if not selected_peripherals:
-        self.status_label.config(text="No peripherals selected.", fg="red")
-        return
+        if not selected_peripherals:
+            self.status_label.config(text="No peripherals selected.", fg="red")
+            return
 
-    # Get selected expiration time
-    expiration_time = {
-        "hour": int(self.hour_var.get()),
-        "minute": int(self.minute_var.get()),
-        "AM": self.am_pm_var.get() == "AM"
-    }
+        # Get selected expiration time
+        expiration_time = {
+            "hour": int(self.hour_var.get()),
+            "minute": int(self.minute_var.get()),
+            "AM": self.am_pm_var.get() == "AM"
+        }
 
-    # Update UI and disable send button
-    self.update_status("Preparing to record...", "blue")
-    self.audio_recorder.enable_recording()
+        # Update UI and disable send button
+        self.update_status("Preparing to record...", "blue")
+        self.audio_recorder.enable_recording()
 
-    # Disable send button
-    self.disable_send_button()
+        # Disable send button
+        self.disable_send_button()
 
-    # Use a thread to perform recording and sending in the background
-    threading.Thread(
-        target=self.record_and_send, args=(selected_peripherals, expiration_time)
-    ).start()
+        # Use a thread to perform recording and sending in the background
+        threading.Thread(
+            target=self.record_and_send, args=(selected_peripherals, expiration_time)
+        ).start()
 
-def record_and_send(self, selected_peripherals, expiration_time):
-    """Record the audio and send it to selected peripherals."""
-    try:
-        # Update status to show recording progress
-        self.update_status("Recording...", "black")
-        self.audio_recorder.record_and_save_audio()
+    def record_and_send(self, selected_peripherals, expiration_time):
+        """Record the audio and send it to selected peripherals."""
+        try:
+            # Update status to show recording progress
+            self.update_status("Recording...", "black")
+            self.audio_recorder.record_and_save_audio()
 
-        # Update status to show sending progress
-        self.update_status("Recording complete. Sending audio...", "blue")
-        Peripheral.send_audio_file(selected_peripherals, expiration_time, AUDIO_PATH)
+            # Update status to show sending progress
+            self.update_status("Recording complete. Sending audio...", "blue")
+            Peripheral.send_audio_file(selected_peripherals, expiration_time, AUDIO_PATH)
 
-        # Update status on success
-        self.update_status("Audio sent successfully.", "green")
-    except Exception as e:
-        # Update status on error
-        self.update_status(f"Error: {e}", "red")
-    finally:
-        # Re-enable the send button
-        self.enable_send_button()
+            # Update status on success
+            self.update_status("Audio sent successfully.", "green")
+        except Exception as e:
+            # Update status on error
+            self.update_status(f"Error: {e}", "red")
+        finally:
+            # Re-enable the send button
+            self.enable_send_button()
 
-def update_status(self, message, color):
-    """Update the status label safely from any thread."""
-    self.controller.after(0, lambda: self.status_label.config(text=message, fg=color))
+    def update_status(self, message, color):
+        """Update the status label safely from any thread."""
+        self.controller.after(0, lambda: self.status_label.config(text=message, fg=color))
 
-def disable_send_button(self):
-    """Disable the send button."""
-    self.controller.after(0, lambda: self.set_send_button_state("disabled"))
+    def disable_send_button(self):
+        """Disable the send button."""
+        self.controller.after(0, lambda: self.set_send_button_state("disabled"))
 
-def enable_send_button(self):
-    """Enable the send button."""
-    self.controller.after(0, lambda: self.set_send_button_state("normal"))
+    def enable_send_button(self):
+        """Enable the send button."""
+        self.controller.after(0, lambda: self.set_send_button_state("normal"))
 
-def set_send_button_state(self, state):
-    """Set the send button's state."""
-    for widget in self.main_frame.winfo_children():
-        if isinstance(widget, ttk.Button) and widget.cget("text") == "Record and Send Audio":
-            widget.config(state=state)
-            self.send_button = widget  # Save reference for convenience
-            break
+    def set_send_button_state(self, state):
+        """Set the send button's state."""
+        for widget in self.main_frame.winfo_children():
+            if isinstance(widget, ttk.Button) and widget.cget("text") == "Record and Send Audio":
+                widget.config(state=state)
+                self.send_button = widget  # Save reference for convenience
+                break
