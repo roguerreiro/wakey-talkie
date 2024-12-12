@@ -75,35 +75,55 @@ class AlarmPage(tk.Frame):
 
     def create_alarm_frame(self, parent, peripheral_id):
         """Creates a frame for configuring the alarm for a specific peripheral."""
-        frame = tk.Frame(parent, bg="white", relief="groove", bd=2)
+        frame = tk.Frame(parent, bg="white", relief="groove", bd=4)
 
-        tk.Label(frame, text=f"Peripheral {peripheral_id}", font=("Helvetica", 16), bg="white").pack()
+        # Peripheral Label
+        tk.Label(frame, text=f"Peripheral {peripheral_id}", font=("Helvetica", 20, "bold"), bg="white").pack(pady=10)
 
         # Alarm Type Dropdown
         alarm_type_var = tk.StringVar(value="Sound 1")
         alarm_type_menu = ttk.OptionMenu(frame, alarm_type_var, "Sound 1", "Sound 1", "Sound 2", "Sound 3")
-        alarm_type_menu.pack(pady=5)
+        alarm_type_menu.config(width=15)
+        alarm_type_menu.pack(pady=10)
 
         # Hour and Minute Spinboxes
+        time_frame = tk.Frame(frame, bg="white")
+        time_frame.pack(pady=10)
+
         hour_var = tk.StringVar(value="12")
         hour_spinbox = tk.Spinbox(
-            frame, from_=1, to=12, wrap=True, textvariable=hour_var, font=("Helvetica", 16), width=2, justify="center", state="readonly"
+            time_frame, from_=1, to=12, wrap=True, textvariable=hour_var, font=("Helvetica", 20), width=3, justify="center", state="readonly"
         )
-        hour_spinbox.pack(side="left", padx=5)
+        hour_spinbox.pack(side="left", padx=10)
 
-        colon_label = tk.Label(frame, text=":", font=("Helvetica", 16), bg="white")
+        colon_label = tk.Label(time_frame, text=":", font=("Helvetica", 20), bg="white")
         colon_label.pack(side="left")
 
         minute_var = tk.StringVar(value="00")
         minute_spinbox = tk.Spinbox(
-            frame, from_=0, to=59, wrap=True, textvariable=minute_var, font=("Helvetica", 16), width=2, justify="center", state="readonly"
+            time_frame, from_=0, to=59, wrap=True, textvariable=minute_var, font=("Helvetica", 20), width=3, justify="center", state="readonly"
         )
-        minute_spinbox.pack(side="left", padx=5)
+        minute_spinbox.pack(side="left", padx=10)
 
         am_pm_var = tk.StringVar(value="AM")
-        am_pm_menu = ttk.OptionMenu(frame, am_pm_var, "AM", "AM", "PM")
-        am_pm_menu.config(width=2)
-        am_pm_menu.pack(side="left", padx=5)
+        am_pm_menu = ttk.OptionMenu(time_frame, am_pm_var, "AM", "AM", "PM")
+        am_pm_menu.config(width=3)
+        am_pm_menu.pack(side="left", padx=10)
+
+        # Submit Button
+        submit_button = tk.Button(
+            frame,
+            text="Set Alarm",
+            font=("Helvetica", 18, "bold"),
+            bg="lightblue",
+            command=lambda: self.submit_time(peripheral_id, hour_var, minute_var, am_pm_var, alarm_type_var),
+        )
+        submit_button.pack(pady=20)
+
+        # Store references to variables for later use
+        frame.vars = {"hour": hour_var, "minute": minute_var, "am_pm": am_pm_var, "type": alarm_type_var}
+        return frame
+
 
         # Submit Button
         submit_button = tk.Button(
