@@ -2,6 +2,7 @@ from comm.files import read_data, save_data
 from comm.rxtx import setup, send_message, Opcode
 from comm.audio import AudioRecorder
 import wave
+import time
 
 FILE_PATH = "/home/pi/wakey-talkie/pi/data.json"
 AUDIO_PATH = "/home/pi/wakey-talkie/audio/recorded_audio.wav"
@@ -70,6 +71,7 @@ class Peripheral(object):
                     print("No peripherals available to send")
                     return
 
+                start = time.time()
                 while True:
                     frames = wav_file.readframes(31)
                     if not frames:
@@ -77,6 +79,7 @@ class Peripheral(object):
                     for id,peripheral in peripherals_copy.items():
                         success = send_message(peripheral.address, Opcode.AUDIO_CHUNK.value, frames, tries=1)
                         if not success: print(f"failed to send chunk to peripheral {id}")
+                print(f"Time elapsed while sending: {time.time()-start} seconds")
 
                 hour_bits = expiration_time["hour"] & 0b1111
                 minute_bits = expiration_time["minute"] & 0b00111111
